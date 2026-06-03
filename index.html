@@ -1328,12 +1328,28 @@ async function enviar(){
     }
     await sb.from('cotacoes').insert(cots.map(function(c){return {solicitacao_id:id,fornecedor:c.fornecedor,valor:c.valor,prazo:c.prazo,pdf_url:c.pdf_url};}));
     if(status==='auto-aprovado'){
-      await sb.from('decisoes').insert({solicitacao_id:id,acao:'auto-aprovado',observacao:'≤ R$ 5.000'});
-    suc('⚡','Aprovação automática: '+desc+' '+fBR(mn)+' - '+mc.fornecedor+' Liberada automaticamente.'); 
-    }else{
-      await reenvWA(id);
-    suc('📩','Enviado! '+id+' '+desc+' '+fBR(mn)+' Presidência notificada via WhatsApp.');  
-    }
+  await sb.from('decisoes').insert({
+    solicitacao_id:id,
+    acao:'auto-aprovado',
+    observacao:'<= R$ 5.000'
+  });
+
+  suc('OK',
+      'Aprovacao automatica: '+desc+
+      ' '+fBR(mn)+
+      ' - '+mc.fornecedor+
+      ' Liberada automaticamente.');
+
+}else{
+
+  await reenvWA(id);
+
+  suc('OK',
+      'Enviado! '+id+
+      ' '+desc+
+      ' '+fBR(mn)+
+      ' Presidencia notificada via WhatsApp.');
+}
     limpar();
     document.getElementById('cnt-p').textContent=Number(document.getElementById('cnt-p').textContent||0)+(status==='pendente'?1:0);
   }catch(e){alert('Erro ao salvar: '+e.message);}
