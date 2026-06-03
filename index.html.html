@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1B2A4A">
+<title>Compras Esposende</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --az:#1B2A4A;--az2:#1E3A5F;--az3:#2563EB;
+  --vd:#16A34A;--vdbg:#F0FDF4;--vdbo:#BBF7D0;
+  --vm:#DC2626;--vmbg:#FEF2F2;--vmbo:#FECACA;
+  --la:#D97706;--labg:#FFFBEB;--labo:#FDE68A;
+  --ci:#F1F5F9;--ci2:#E2E8F0;--ci3:#94A3B8;
+  --tx:#0F172A;--tx2:#475569;--tx3:#94A3B8;
+  --br:#FFF;--r:14px;--rs:9px;
+  --sh:0 2px 12px rgba(0,0,0,.08);--shl:0 8px 32px rgba(0,0,0,.16);
+}
+body{font-family:'Inter',system-ui,sans-serif;background:#EEF2F7;color:var(--tx);min-height:100vh}
+.hd{background:var(--az);height:54px;padding:0 1rem;display:flex;align-items:center;
+    justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.hd-l{display:flex;align-items:center;gap:10px}
+.hd-logo img{height:30px;filter:brightness(0) invert(1);border-radius:4px}
+.hd-tit h1{color:#fff;font-size:13px;font-weight:700}
+.hd-tit p{color:rgba(255,255,255,.55);font-size:10px}
+.hd-r{display:flex;align-items:center;gap:8px}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:#ef4444}
+.conn-dot.ok{background:#22c55e}
+.hd-badge{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.25);
+           border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700}
+.nav{background:var(--br);border-bottom:1px solid var(--ci2);display:flex;
+      position:sticky;top:54px;z-index:90;overflow-x:auto}
+.na{padding:10px 12px;font-size:12px;font-weight:500;color:var(--tx2);cursor:pointer;
+     border-bottom:2.5px solid transparent;white-space:nowrap;transition:all .15s;
+     display:flex;align-items:center;gap:4px;flex-shrink:0}
+.na.on{color:var(--az2);border-bottom-color:var(--az2);font-weight:700}
+.na-n{width:16px;height:16px;border-radius:50%;font-size:9px;font-weight:700;
+       display:inline-flex;align-items:center;justify-content:center;
+       background:var(--vmbg);color:var(--vm)}
+.na.on .na-n{background:var(--az2);color:#fff}
+.w{max-width:600px;margin:0 auto;padding:.85rem .85rem 5rem}
+.card{background:var(--br);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:.85rem;overflow:hidden}
+.card-hd{padding:.75rem 1.1rem;border-bottom:1px solid var(--ci2);
+          display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.cht{font-size:11px;font-weight:700;color:var(--az2);text-transform:uppercase;letter-spacing:.4px}
+.dash-hero{background:linear-gradient(135deg,#1B2A4A 0%,#1E3A5F 55%,#1a4a7a 100%);
+            border-radius:var(--r);padding:1.2rem;margin-bottom:.85rem;box-shadow:var(--shl)}
+.filtro-data{background:rgba(255,255,255,.08);border-radius:10px;padding:8px 11px;
+              margin-bottom:10px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.filtro-data label{color:rgba(255,255,255,.65);font-size:10px;font-weight:600}
+.filtro-data input[type=date]{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+                               border-radius:6px;padding:4px 7px;color:#fff;font-size:11px;font-family:inherit}
+.fbtn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:6px;
+       color:rgba(255,255,255,.8);font-size:10px;font-weight:600;padding:4px 9px;cursor:pointer;
+       transition:all .13s;font-family:inherit}
+.fbtn:hover,.fbtn.on{background:rgba(255,255,255,.28);color:#fff;border-color:rgba(255,255,255,.5)}
+.dh-lbl{color:rgba(255,255,255,.65);font-size:10px;font-weight:600;text-transform:uppercase;
+         letter-spacing:.5px;margin-bottom:3px}
+.dh-val{color:#fff;font-size:28px;font-weight:800;line-height:1;margin-bottom:2px}
+.dh-sub{color:rgba(255,255,255,.5);font-size:10px}
+.dh-row{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:12px}
+.dh-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.dm{background:rgba(255,255,255,.09);border-radius:10px;padding:9px 11px}
+.dm-l{color:rgba(255,255,255,.55);font-size:10px;font-weight:500;margin-bottom:2px}
+.dm-v{color:#fff;font-size:15px;font-weight:700}
+.dm-s{color:rgba(255,255,255,.45);font-size:9px;margin-top:1px}
+.bar-wrap{padding:.75rem 1.1rem}
+.bar-row{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.bar-lbl{font-size:11px;color:var(--tx2);width:135px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{flex:1;height:6px;background:var(--ci);border-radius:3px;overflow:hidden}
+.bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.bar-val{font-size:11px;font-weight:600;min-width:62px;text-align:right}
+.kpi3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:.85rem}
+.kpi{background:var(--br);border-radius:var(--rs);padding:.75rem;box-shadow:var(--sh);text-align:center}
+.kpi-n{font-size:18px;font-weight:800;line-height:1}
+.kpi-l{font-size:10px;color:var(--tx3);margin-top:2px;font-weight:500}
+.pill{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.pp{background:var(--labg);color:var(--la)}
+.pa{background:var(--vdbg);color:var(--vd)}
+.pr{background:var(--vmbg);color:var(--vm)}
+.pau{background:#EFF6FF;color:#1D4ED8}
+.sc{background:var(--br);border-radius:var(--r);box-shadow:var(--sh);margin-bottom:.7rem;
+     overflow:hidden;border:1.5px solid var(--ci2);transition:transform .13s;cursor:pointer}
+.sc:hover{transform:translateY(-1px);box-shadow:var(--shl)}
+.sc.bp{border-left:4px solid var(--la)}
+.sc.ba{border-left:4px solid var(--vd)}
+.sc.bauto{border-left:4px solid #2563EB}
+.sc-hd{padding:.75rem .9rem;display:flex;align-items:flex-start;gap:7px;justify-content:space-between}
+.sc-id{font-size:9px;font-weight:700;color:var(--tx3);letter-spacing:.5px;margin-bottom:2px}
+.sc-desc{font-size:13px;font-weight:600;margin-bottom:3px;line-height:1.3}
+.sc-meta{font-size:10px;color:var(--tx2);display:flex;gap:7px;flex-wrap:wrap}
+.sc-val{font-size:16px;font-weight:800;color:var(--az2);text-align:right;white-space:nowrap}
+.sc-eco{font-size:10px;color:var(--vd);font-weight:600;margin-top:1px;text-align:right}
+.sc-ft{padding:.55rem .9rem;background:var(--ci);display:flex;justify-content:space-between;
+        font-size:10px;color:var(--tx2);gap:8px}
+.sc-ft strong{color:var(--vd);font-weight:700}
+.det{display:none}
+.det.on{display:block}
+.ir{display:flex;align-items:flex-start;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--ci2)}
+.ir:last-child{border-bottom:none}
+.il{font-size:11px;color:var(--tx3);font-weight:500;flex-shrink:0;margin-right:6px}
+.iv{font-size:11px;font-weight:600;color:var(--tx);text-align:right;max-width:220px}
+.ct{width:100%;border-collapse:collapse;font-size:11px;margin:8px 0}
+.ct th{background:var(--ci);color:var(--tx2);font-weight:600;font-size:9px;text-transform:uppercase;
+        letter-spacing:.4px;padding:6px 8px;text-align:left}
+.ct td{padding:8px;border-bottom:1px solid var(--ci2)}
+.ct tr:last-child td{border-bottom:none}
+.ct-mn{background:var(--vdbg)}
+.ct-mn td{font-weight:700;color:#15803D}
+.bmn{background:var(--vdbg);color:var(--vd);border:1px solid var(--vdbo);border-radius:20px;font-size:9px;font-weight:700;padding:1px 5px}
+.bmx{background:var(--vmbg);color:var(--vm);border-radius:20px;font-size:9px;padding:1px 5px}
+.pdf-cot{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:5px;padding:3px 7px;
+          font-size:10px;font-weight:600;color:#1D4ED8;cursor:pointer;text-decoration:none;display:inline-block}
+.eco-b{background:var(--vdbg);border:1px solid var(--vdbo);border-radius:var(--rs);padding:9px 12px;margin:8px 0}
+.eco-r{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:var(--tx2)}
+.eco-r.t{border-top:1px solid var(--vdbo);padding-top:6px;margin-top:3px;font-weight:700;font-size:12px;color:var(--vd)}
+.d3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:12px}
+.bap{background:var(--vd);color:#fff;border:none;border-radius:var(--rs);padding:11px 6px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .15s;font-family:inherit}
+.bap:hover{background:#15803D}
+.bre{background:var(--vmbg);color:var(--vm);border:1.5px solid var(--vmbo);border-radius:var(--rs);padding:11px 6px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .15s;font-family:inherit}
+.bre:hover{background:var(--vm);color:#fff}
+.brv{background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;border-radius:var(--rs);padding:11px 6px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .15s;font-family:inherit}
+.brv:hover{background:#DBEAFE}
+.bprint{background:var(--ci);color:var(--tx2);border:1px solid var(--ci2);border-radius:var(--rs);padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px}
+.fl{font-size:11px;color:var(--tx3);font-weight:600;display:block;margin-bottom:3px}
+.fi{width:100%;padding:8px 10px;border:1.5px solid var(--ci2);border-radius:var(--rs);
+     font-family:inherit;font-size:13px;color:var(--tx);background:#fff;transition:border .15s}
+.fi:focus{outline:none;border-color:var(--az3)}
+select.fi{cursor:pointer}
+textarea.fi{resize:vertical;min-height:60px}
+.fg{margin-bottom:10px}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.cot-g{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:9px}
+.cc{background:var(--ci);border:1.5px solid var(--ci2);border-radius:var(--rs);padding:9px;transition:all .2s}
+.cc.mn{background:var(--vdbg);border-color:var(--vdbo)}
+.cc-lbl{font-size:9px;font-weight:700;color:var(--tx3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px}
+.cc select,.cc input{width:100%;border:1px solid var(--ci2);border-radius:6px;padding:5px 7px;
+                      font-size:11px;font-family:inherit;background:#fff;margin-top:2px;color:var(--tx)}
+.cc select:focus,.cc input:focus{outline:none;border-color:var(--az3)}
+.forn-info{font-size:9px;color:var(--az2);margin-top:2px;line-height:1.3;min-height:12px}
+.pdf-u{background:#fff;border:1px dashed var(--ci3);border-radius:6px;padding:5px;
+        font-size:10px;color:var(--az2);cursor:pointer;width:100%;margin-top:3px;
+        text-align:center;font-weight:600;position:relative;display:block;overflow:hidden}
+.pdf-u.ok{border-style:solid;border-color:var(--vd);background:var(--vdbg);color:var(--vd)}
+.pdf-u input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.al5k{background:var(--labg);border:1px solid var(--labo);border-radius:var(--rs);
+       padding:8px 12px;font-size:11px;color:var(--la);display:none;align-items:center;gap:6px;margin-top:7px}
+.eco-form{background:var(--vdbg);border:1px solid var(--vdbo);border-radius:var(--rs);
+           padding:9px 12px;margin-top:8px;display:none}
+.bsend{background:var(--az2);color:#fff;border:none;border-radius:var(--rs);padding:13px;
+        font-size:14px;font-weight:700;cursor:pointer;width:100%;display:flex;align-items:center;
+        justify-content:center;gap:7px;margin-top:12px;transition:all .15s;font-family:inherit}
+.bsend:hover{background:var(--az)}
+.bsend:disabled{opacity:.45;cursor:not-allowed}
+.dz{border:2px dashed var(--ci2);border-radius:var(--r);padding:1.25rem;text-align:center;
+     cursor:pointer;transition:all .2s;background:#FAFBFC;position:relative}
+.dz:hover,.dz.ov{border-color:var(--az2);background:#EEF4FB}
+.dz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.conf-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;
+          display:none;align-items:flex-end;justify-content:center}
+.conf-ov.on{display:flex}
+.conf-sh{background:#fff;border-radius:20px 20px 0 0;padding:1.4rem;width:100%;max-width:600px}
+.conf-t{font-size:16px;font-weight:700;margin-bottom:5px}
+.conf-d{font-size:12px;color:var(--tx2);margin-bottom:1.1rem;line-height:1.6;white-space:pre-wrap}
+.conf-bs{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.suc-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;
+         display:none;align-items:center;justify-content:center}
+.suc-ov.on{display:flex}
+.suc-bx{background:#fff;border-radius:20px;padding:1.75rem 1.4rem;text-align:center;
+         max-width:290px;width:90%;animation:pop .3s ease}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+.suc-i{font-size:44px;margin-bottom:9px}
+.suc-t{font-size:16px;font-weight:700;margin-bottom:4px}
+.suc-d{font-size:11px;color:var(--tx2);line-height:1.5;margin-bottom:1.1rem;white-space:pre-wrap}
+.suc-btn{background:var(--az2);color:#fff;border:none;border-radius:var(--rs);
+          padding:10px 26px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.empty-msg{text-align:center;padding:2rem;color:var(--tx3);font-size:12px}
+.user-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--ci2)}
+.user-row:last-child{border-bottom:none}
+.user-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;margin-right:10px}
+.pb{border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700}
+.pb-presidente{background:#F5F3FF;color:#6D28D9}
+.pb-admin{background:#F0FDF4;color:#15803D}
+.pb-comprador{background:#EFF6FF;color:#1D4ED8}
+.st-bar{background:var(--br);border-radius:var(--rs);padding:8px 11px;margin-bottom:8px;
+         border:1px solid var(--ci2);font-size:11px;color:var(--tx2);display:flex;align-items:center;gap:7px}
+.st-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;
+       border-radius:50%;animation:sp .7s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media print{
+  .hd,.nav,.d3,.bprint,.conf-ov,.suc-ov{display:none!important}
+  .w{padding:0;max-width:100%}
+  .sc{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+}
+@media(max-width:420px){
+  .cot-g{grid-template-columns:1fr}
+  .r2{grid-template-columns:1fr}
+  .dh-val{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<div class="hd">
+  <div class="hd-l">
+    <div class="hd-logo"><img src="data:image/jpeg;base64,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oAAAAAAAAAAAAAAAAABCoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFgqCgAAAAAAAAAAAAELAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWCoKgoAABCoKgqAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/2gAMAwEAAgADAAAAIQAAAAAAAAAAAAAAAAABDPPPPPPPPPPPPPPPDCAAAAAAAAAAAAAAAAAAAAAAAAAAAAABDPPPPPPPPPPPPPPPPPPPDCAAAAAAAAAAAAAAAAAAAAAAAAAADPPPPPPPPPMMMMMNNPPPPPPPLCAAAAAAAAAAAAAAAAAAAAAABPPPPPPOMIAAAAAAAAAIMNPPPPPPDAAAAAAAAAAAAAAAAAAAAHPPPPPMAAAAAAAAAAAAAAAAINPPPPPDAAAAAAAAAAAAAAAAABPPPPPOAAAAAAABDDDDDDAAAAAAENPPPPLCAAAAAAAAAAAAAAAPPPPOIAAAABDPPPPPPPPPPLDAAAAAEPPPPLAAAAAAAAAAAAAAHPPPOIAAABDPPPPPPPPvPPPvPPDCAAAENPPPLAAAAAAAAAAAAHPPPOAAAADPPPPPMskgggsstvPPPPDAAAANPPPLAAAAAAAAAAHPPPOAAABHPPvPsgggggggggggktPPvLCAAENPPPKAAAAAAAABPPPOAAABHPPPsggggggggiggggggsvPPPCAAANPPPCAAAAAAAHPPPIAABPPPOgggghjvvvvvvrjiggggtvPPAAAEPPPLAAAAAAFPPPKAAAHPPOggghnvvvvvvvvvvvrggggtvPLAAAFPPPCAAAAAHPPOAAAHPPOgAghvvvvusssssvvvvvigggNPPLAAAPPPKAAAABPPPKAABPPOIggnvvvuogggggggktvvvrggkvPPCAAFPPPAAAAPPPPAAAHPPIggjvvvsgggggggggggkvvvqggkvPLAAAPPPAAAAPPPKAABPPOgghvvvoggggjjnjjggggkvvviggtPPCAAFPPAAAFPPPAAAHPPAggnvvogggnvvvvvvvjgggkvvrggkvPLAAEPPAAAFPPPAAAPPOAghvvugggnvvvvvvvvvrgggtvviggvPPAAAPPAAAHPPOAABPPKggnvvgggnvvvvustvvvvrgggvvrgglvPCAANPAAAPPPKAAFPPIggvvqgghvvvugggggtvvvgggtvvgglvPKAAFPAAAPPPKAAFPPAAhvvqgglvvvggggggkvvvqgglvvgggvPKAAFPAAAPPPCAAFPPAglvvoggvvvuggggggglvvrgglvvqggvPLAAFPAAAPPPKAAzXbib7v+ign3zaqhz4P/AMya3Jr50R57/wDrC88oAAU8AAA888oAB7jE9K1pO7J9NeR6VThtzwWsbr8i5s80vKC88oAAU8AAA888oAB8w0VpVp6KehW+6vS4D4wyW9tr8DEq8wwhC88oAAU8AAA888oAB988Q1dp29WnW++/cmh/CCW99r8DGr8cCCC88oAAU8AAA888oAG395hVc/48H/J7Xy1fN3oVW99r8KfsJ9FKW88oAA08AAAU888AADyt+6wy++KHx5/I2s+s8kU/6q38n++/yDe88AAA88AAAU888AAA888CCC+++CCCS+++++++++iCCG+++CCC884AAE88AAAA888oAAU88qCCW++uCCCCy++++6yCCCCe++qCCe+8oAAU88AAAA888sAAA888CCC2++uCCCCCCCCCCCCCe++6CCA888AAAc88AAAAU888IAAU88sCCC+++uKCCCCCCCCCO+++6CCAc+8oAAU888AAAAA8888AAA88+KCCC2+++uOKCCCCO++++6CCCG+84AAAc888AAAAAU888IAAQ888KCCC2+++++++++++++6CCCG888gAAE888oAAAAAA8888AAAU8+8KCCCSy+++++++++6iCCCG888gAAAc888AAAAAAAU888sAAAU888sCCCCCyyyyyyyCCCCCe888gAAAc8884AAAAAAAA8888IAAAQ888uOCCCCCCCCCCCCCM8888gAAAU8884AAAAAAAAAA8888MAAAQ8888sOKCCCCCCCAO88888gAAAM8888gAAAAAAAAAAU8888MAAAAw88888+8M+e888+8884AAAAE8888gAAAAAAAAAAAAQ8888sAAAAQ08888888888888wAAAAAc8888gAAAAAAAAAAAAAAQ8888sIAAAAAQw488888wwgAAAAAEc8888oAAAAAAAAAAAAAAAAQ88888sAAAAAAAAAAAAAAAAAAEM88888gAAAAAAAAAAAAAAAAAAQ888888sMAAAAAAAAAAAAAEc888888AAAAAAAAAAAAAAAAAAAAAAw8888888sMMAAAEMMM88888888gAAAAAAAAAAAAAAAAAAAAAAAAAw8888888888888888888884gAAAAAAAAAAAAAAAAAAAAAAAAAAAAw88888888888888888wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAw0888888888wwgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQQQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIAAwAAABAIIIIIIIIIIIIIZ7777rIIIIIIIIIIIIIIILLb7744IIIIIIIIIIIIIIIIIIIII7777rIIIIY55777777444oIILLb764oIIIIIIIIIIIIIIIIIZ7777IIIZ777777LLLLLbb7744IIJLb764IIIIIIIIIIIIIIIJ777oIII777rKIIIIIIIIIKLLb764IILL764oIIIIIIIIIIIIb776III777IIIIY5777774444IKLb744ILL774IIIIIIIIIIIZ77oIIb77oIIZ7777rLLLLLL7764oJLb74IJLb64oIIIIIIIIb774IIb7qIIZ77rIIIIIIIIIIJLL764oJL74oJL774IIIIIIIJ776IJ77qIJ77rIIIZ7777z774w4oLLb44JLb4oJL764IIIIIJb76IIb7oIZ77IIZ777DBAAADDDT764ILL64ILb4oJL764IIIIL76IIb7oIJ7qIIz7zAAAAwwwwwgABDb4wJLb4pLb4oJb74IIIJ77oIJ7oIb7qIL7zAARzzzzzzTzzwwgDD64ILb4ILb4ILb4IIJb76IJ76IL7oIb7gABzzjAAAAAABDDTwwADT4oL64JL64JL4IIJ76oJb6oJ76Ib7gATziAAAxzzzwwwgBDzwgDT4pL64Jb4oLYIIb76IJ7oIb6IL7gITz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" alt="Esposende"></div>
+    <div class="hd-tit"><h1>Compras Esposende</h1><p>Sistema de aprovação</p></div>
+  </div>
+  <div class="hd-r">
+    <div class="conn-dot" id="conn-dot" title="Supabase"></div><span id="conn-lbl" style="color:rgba(255,255,255,.6);font-size:10px">...</span>
+    <div class="hd-badge">Admin</div>
+  </div>
+</div>
+
+
+<div id="aviso-servidor" style="display:none;background:#FEF3C7;border-bottom:2px solid #F59E0B;
+  padding:10px 16px;align-items:center;gap:10px;flex-wrap:wrap">
+  <span style="font-size:20px">⚠️</span>
+  <div style="flex:1">
+    <div style="font-size:13px;font-weight:700;color:#92400E">Abra via servidor local para conectar ao banco</div>
+    <div style="font-size:11px;color:#78350F;margin-top:2px">
+      No Windows: abra o CMD na pasta do arquivo e rode: <strong>python -m http.server 8000</strong><br>
+      Depois acesse: <strong>http://localhost:8000/COMPRAS_ESPOSENDE.html</strong>
+    </div>
+  </div>
+  <button onclick="document.getElementById('aviso-servidor').style.display='none'"
+    style="background:#F59E0B;border:none;border-radius:6px;padding:5px 12px;font-weight:700;cursor:pointer;font-size:12px">Fechar</button>
+</div>
+<div class="nav">
+  <div class="na on" id="na-dash" onclick="irAba('dash',this)">📊 Dashboard</div>
+  <div class="na" id="na-pend" onclick="irAba('pend',this)">⏳ Pendentes <span class="na-n" id="cnt-p">0</span></div>
+  <div class="na" id="na-aprov" onclick="irAba('aprov',this)">✅ Aprovados</div>
+  <div class="na" id="na-nova" onclick="irAba('nova',this)">➕ Nova</div>
+  <div class="na" id="na-admin" onclick="irAba('admin',this)">⚙️ Admin</div>
+</div>
+
+<!-- DASH -->
+<div id="aba-dash" class="w">
+  <div class="dash-hero">
+    <div class="filtro-data">
+      <label>Período:</label>
+      <input type="date" id="dt-ini" onchange="carregarDash()">
+      <span style="color:rgba(255,255,255,.4);font-size:11px">até</span>
+      <input type="date" id="dt-fim" onchange="carregarDash()">
+      <button class="fbtn on" id="fb-30" onclick="setPeriodo(30)">30d</button>
+      <button class="fbtn" id="fb-60" onclick="setPeriodo(60)">60d</button>
+      <button class="fbtn" id="fb-90" onclick="setPeriodo(90)">90d</button>
+      <button class="fbtn" id="fb-all" onclick="setPeriodo(0)">Tudo</button>
+    </div>
+    <div class="dh-row">
+      <div><div class="dh-lbl">💰 Economia gerada</div><div class="dh-val" id="d-eco">R$ —</div><div class="dh-sub" id="d-eco-sub">—</div></div>
+      <div style="text-align:right"><div class="dh-lbl">Taxa aprovação</div><div class="dh-val" id="d-taxa" style="font-size:22px">—%</div></div>
+    </div>
+    <div class="dh-grid">
+      <div class="dm"><div class="dm-l">Aprovadas</div><div class="dm-v" id="d-aprov">—</div><div class="dm-s" id="d-aprov-v">—</div></div>
+      <div class="dm"><div class="dm-l">Pendentes</div><div class="dm-v" id="d-pend">—</div><div class="dm-s" id="d-pend-v">—</div></div>
+      <div class="dm"><div class="dm-l">Auto-aprovadas</div><div class="dm-v" id="d-auto">—</div><div class="dm-s">≤ R$ 5.000</div></div>
+      <div class="dm"><div class="dm-l">Ticket médio</div><div class="dm-v" id="d-ticket">—</div><div class="dm-s">por compra</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><span class="cht">Economia por área</span><span id="d-per" style="font-size:10px;color:var(--tx3)"></span></div>
+    <div class="bar-wrap" id="bar-areas"><div class="empty-msg">Carregando...</div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><span class="cht">Top fornecedores</span></div>
+    <div class="bar-wrap" id="bar-forns"><div class="empty-msg">Carregando...</div></div>
+  </div>
+  <div class="kpi3">
+    <div class="kpi"><div class="kpi-n" id="d-mes" style="color:var(--vd)">—</div><div class="kpi-l">Este mês</div></div>
+    <div class="kpi"><div class="kpi-n" id="d-rej" style="color:var(--vm)">—</div><div class="kpi-l">Rejeitadas</div></div>
+    <div class="kpi"><div class="kpi-n" id="d-rev" style="color:var(--la)">—</div><div class="kpi-l">Em revisão</div></div>
+  </div>
+</div>
+
+<!-- PENDENTES -->
+<div id="aba-pend" class="w" style="display:none">
+  <div class="kpi3">
+    <div class="kpi"><div class="kpi-n" id="kp-n" style="color:var(--vm)">0</div><div class="kpi-l">Aguardando</div></div>
+    <div class="kpi"><div class="kpi-n" id="kp-eco" style="color:var(--vd)">—</div><div class="kpi-l">Econ. potencial</div></div>
+    <div class="kpi"><div class="kpi-n" id="kp-val" style="color:var(--az2)">—</div><div class="kpi-l">Valor total</div></div>
+  </div>
+  <div id="lista-pend"><div class="empty-msg">Carregando...</div></div>
+</div>
+
+<!-- APROVADOS -->
+<div id="aba-aprov" class="w" style="display:none">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem;flex-wrap:wrap">
+    <input class="fi" id="aprov-busca" placeholder="Buscar aprovados..." style="flex:1;min-width:150px" oninput="renderAprovados()">
+    <button class="bprint" onclick="window.print()">🖨️ Imprimir</button>
+  </div>
+  <div id="lista-aprov"><div class="empty-msg">Carregando...</div></div>
+</div>
+
+<!-- NOVA -->
+<div id="aba-nova" class="w" style="display:none">
+  <div class="card">
+    <div class="card-hd"><span class="cht">Identificação</span></div>
+    <div style="padding:.85rem 1.1rem">
+      <div class="r2" style="margin-bottom:9px">
+        <div class="fg"><label class="fl">Solicitante</label><input class="fi" id="n-sol" placeholder="Nome completo"></div>
+        <div class="fg"><label class="fl">Área de gestão</label><select class="fi" id="n-area"><option value="">Selecione...</option>
+<option>01 - Diretoria Executiva</option>
+<option>02 - Comercial</option>
+<option>03 - Facilities</option>
+<option>04 - Recursos Humanos</option>
+<option>05 - Auditoria</option>
+<option>06 - T.I.C</option>
+<option>07 - Logística</option>
+<option>08 - Financeiro</option></select></div>
+      </div>
+      <div class="r2" style="margin-bottom:9px">
+        <div class="fg"><label class="fl">Categoria</label><select class="fi" id="n-cat"><option value="">Selecione...</option>
+<option>Eletrodoméstico</option><option>Iluminação</option><option>Imobilizado</option>
+<option>Marketing</option><option>Materiais de TI</option>
+<option>Materiais de alumínio e vidros</option><option>Materiais de construção</option>
+<option>Materiais de drywall</option><option>Materiais de expediente</option>
+<option>Materiais de ferro e aço</option><option>Materiais de higiene e limpeza</option>
+<option>Materiais de incêndio</option><option>Materiais de manutenção predial</option>
+<option>Materiais de marcenaria</option><option>Materiais de pintura</option>
+<option>Materiais de refrigeração</option><option>Materiais elétricos</option>
+<option>Monitoramento e CFTV</option><option>RH</option></select></div>
+        <div class="fg"><label class="fl">Destino / Loja</label><input class="fi" id="n-dest" placeholder="Ex: Loja 12 — Caruaru"></div>
+      </div>
+      <div class="fg"><label class="fl">Descrição do item</label><input class="fi" id="n-desc" placeholder="Descreva o item ou serviço"></div>
+      <div class="fg"><label class="fl">Justificativa</label><textarea class="fi" id="n-just" placeholder="Por que essa compra é necessária?"></textarea></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <span class="cht">Cotações (mín. 2)</span>
+      <span id="eco-badge" style="display:none" class="pill pa">✓ Menor calculado</span>
+    </div>
+    <div style="padding:.85rem 1.1rem">
+      <div class="cot-g">
+        <div class="cc" id="cc0">
+          <div class="cc-lbl">Fornecedor A</div>
+          <select id="fn0" onchange="onFC(0)"><option value="">Selecione o fornecedor...</option>
+<option value="LOGNET">LOGNET — Materiais de TI e automação</option>
+<option value="MICRO OFFICE">MICRO OFFICE — Materiais de TI e automação</option>
+<option value="RECIFETRONIC">RECIFETRONIC — Materiais de TI e automação</option>
+<option value="EXPRESSO INFORMÁLTICA">EXPRESSO INFORMÁLTICA — Materiais de TI e automação</option>
+<option value="GAMA INFORMÁTICA">GAMA INFORMÁTICA — Materiais de TI e automação</option>
+<option value="TECHNO SPACE">TECHNO SPACE — Materiais de TI e automação</option>
+<option value="SISTEMAQ">SISTEMAQ — Materiais de TI e automação</option>
+<option value="GMI DISTRIBUIDORA">GMI DISTRIBUIDORA — Materiais de TI e automação</option>
+<option value="HG CODE SOLUTIONS">HG CODE SOLUTIONS — Materiais de TI e automação</option>
+<option value="HX SOLUTIONS">HX SOLUTIONS — Materiais de TI e automação</option>
+<option value="KGM LAN DISTRIBUIDORA">KGM LAN DISTRIBUIDORA — Monitoramento e CFTV</option>
+<option value="TNT INFO">TNT INFO — Materiais de TI e automação</option>
+<option value="BZ TECH">BZ TECH — Materiais de TI e automação</option>
+<option value="CIA DO NOBREAK">CIA DO NOBREAK — Materiais de TI e automação</option>
+<option value="PROCESSTEC">PROCESSTEC — Materiais de TI e automação</option>
+<option value="ILAND SOLUÇÕES">ILAND SOLUÇÕES — Materiais de TI e automação</option>
+<option value="LEMOS TELECOM">LEMOS TELECOM — Materiais de TI e automação</option>
+<option value="TELCABOS DISTRIBUIDORA">TELCABOS DISTRIBUIDORA — Materiais de TI e automação</option>
+<option value="PRO4CE AUTOMAÇÃO">PRO4CE AUTOMAÇÃO — Materiais de TI e automação</option>
+<option value="COOPTEC SOLUÇÕES">COOPTEC SOLUÇÕES — Materiais de TI e automação</option>
+<option value="JAGUAR MAT. ELÉTRICOS">JAGUAR MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="MAFEMA MAT. ELÉTRICOS">MAFEMA MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="RIDEL MAT. ELÉTRICOS">RIDEL MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="RESSEG DISTRIBUIDORA">RESSEG DISTRIBUIDORA — Materiais MRO</option>
+<option value="ESPERANÇA NORDESTE">ESPERANÇA NORDESTE — Materiais MRO</option>
+<option value="RENASCER DISTRIBUIDORA">RENASCER DISTRIBUIDORA — Materiais MRO</option>
+<option value="DIMENSIONAL MAT. ELÉTRICOS">DIMENSIONAL MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="PJ NEBLINA MAT. ELÉTRICOS">PJ NEBLINA MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="PORTELA DISTRIBUIDORA">PORTELA DISTRIBUIDORA — Materiais elétricos</option>
+<option value="NORTEL SUPRIMENTOS">NORTEL SUPRIMENTOS — Materiais elétricos</option>
+<option value="AÇOMAIS OLINDA">AÇOMAIS OLINDA — Materiais de ferro e aço</option>
+<option value="CM PRODUTOS SIDERÚRGICOS">CM PRODUTOS SIDERÚRGICOS — Materiais de ferro e aço</option>
+<option value="NOVO NORDESTE ABREU">NOVO NORDESTE ABREU — Materiais de ferro e aço</option>
+<option value="MEGA NORDESTE CABO">MEGA NORDESTE CABO — Materiais de ferro e aço</option>
+<option value="FERRO E AÇO CAMARAGIBE">FERRO E AÇO CAMARAGIBE — Materiais de ferro e aço</option>
+<option value="IDEAL FERRO E AÇO">IDEAL FERRO E AÇO — Materiais de ferro e aço</option>
+<option value="ARCELORMITTAL BRASIL">ARCELORMITTAL BRASIL — Materiais de ferro e aço</option>
+<option value="COMERCIAL GERDAU">COMERCIAL GERDAU — Materiais de ferro e aço</option>
+<option value="CAFÉ PETINHO">CAFÉ PETINHO — Materiais de expediente</option>
+<option value="GRUPO FORTPEL">GRUPO FORTPEL — Materiais de expediente</option>
+<option value="MAXXISUPRI DISTRIBUIDORA">MAXXISUPRI DISTRIBUIDORA — Materiais de expediente</option>
+<option value="KALUNGA PATTEO">KALUNGA PATTEO — Materiais de expediente</option>
+<option value="MUNDO DA IMPERMEABILIZAÇÃO">MUNDO DA IMPERMEABILIZAÇÃO — Materiais de construção e pr</option>
+<option value="CASIMPER IMPERMEABILIZAÇÃO">CASIMPER IMPERMEABILIZAÇÃO — Materiais de construção e pr</option>
+<option value="MAXXCOM IMPERMEABILIZAÇÃO">MAXXCOM IMPERMEABILIZAÇÃO — Materiais de construção e pr</option>
+<option value="DINAMIKA SOLUÇÕES">DINAMIKA SOLUÇÕES — Imobilizado</option>
+<option value="MADECENTER">MADECENTER — Materiais de marcenaria</option>
+<option value="FERREIRA PINTO">FERREIRA PINTO — Materiais de marcenaria</option>
+<option value="ARMAZÉM RIBEIRA">ARMAZÉM RIBEIRA — Materiais de marcenaria</option>
+<option value="LEO MADEIRAS">LEO MADEIRAS — Materiais de marcenaria</option>
+<option value="VAREJÃO DA MADEIRA">VAREJÃO DA MADEIRA — Materiais de marcenaria</option>
+<option value="MADEPORT">MADEPORT — Materiais de marcenaria</option>
+<option value="JOSEMAR">JOSEMAR — Frete</option>
+<option value="EDUARDO">EDUARDO — Frete</option>
+<option value="IMPERIO MÓVEIS TELEVENDAS">IMPERIO MÓVEIS TELEVENDAS — Móveis e eletro</option>
+<option value="MILLENA MOVEIS TELEVENDAS">MILLENA MOVEIS TELEVENDAS — Móveis e eletro</option>
+<option value="LED NORDESTE">LED NORDESTE — Iluminação</option>
+<option value="GRUPO PJ ILUMINAÇÃO">GRUPO PJ ILUMINAÇÃO — Iluminação</option>
+<option value="NAGA SOLUÇÕES">NAGA SOLUÇÕES — Materiais de expediente</option>
+<option value="PEPAC EMBALAGENS">PEPAC EMBALAGENS — Materiais de expediente</option>
+<option value="ALLTAPE FITAS">ALLTAPE FITAS — Materiais de expediente</option>
+<option value="SUZANO PAPEL TELEVENDAS">SUZANO PAPEL TELEVENDAS — Materiais de expediente</option>
+<option value="LOJA DO CONDOMINIO TELEVENDAS">LOJA DO CONDOMINIO TELEVENDAS — Materiais MRO</option>
+<option value="BACCHI ARTEFATOS DE FERRO">BACCHI ARTEFATOS DE FERRO — Marketing</option>
+<option value="ACIOMEC EMBALAGENS">ACIOMEC EMBALAGENS — Materiais de expediente</option>
+<option value="SÃO BRAZ">SÃO BRAZ — Materiais de expediente</option>
+<option value="EKKO COPOS E BRINDES">EKKO COPOS E BRINDES — Materiais de expediente</option>
+<option value="FLEX EMBALAGENS PLÁSTICAS">FLEX EMBALAGENS PLÁSTICAS — Materiais de expediente</option>
+<option value="ETIQ PLAST TRAVA ANEL">ETIQ PLAST TRAVA ANEL — Materiais de expediente</option>
+<option value="ART LED ILUMINAÇÃO">ART LED ILUMINAÇÃO — Iluminação</option>
+<option value="MODE ON ILUMINAÇÃO">MODE ON ILUMINAÇÃO — Iluminação</option>
+<option value="DUFRIO REFRIGERAÇÃO">DUFRIO REFRIGERAÇÃO — Materiais de refrigeração</option>
+<option value="FRIGELAR">FRIGELAR — Materiais de refrigeração</option>
+<option value="FRIOPEÇAS">FRIOPEÇAS — Materiais de refrigeração</option>
+<option value="CLIMA RIO">CLIMA RIO — Materiais de refrigeração</option>
+<option value="NORTE PEÇAS REFRIGERAÇÃO">NORTE PEÇAS REFRIGERAÇÃO — Materiais de refrigeração</option>
+<option value="NORDAP REFRIGERAÇÃO">NORDAP REFRIGERAÇÃO — Materiais de refrigeração</option>
+<option value="GLOBAL MUSIC INSTRUMENTOS / INNOVEX DISTRIBUIDORA">GLOBAL MUSIC INSTRUMENTOS / INNOVEX DISTRIBUIDORA — Imobilizado</option>
+<option value="DIGITAL COMERCIO">DIGITAL COMERCIO — Iluminação</option>
+<option value="JUNGHEINRICH EQUIPAMENTOS">JUNGHEINRICH EQUIPAMENTOS — Imobilizado</option>
+<option value="PRENORTE FABRICADOS">PRENORTE FABRICADOS — Materiais de construção e pr</option>
+<option value="DO MESTRE ARGAMASSAS">DO MESTRE ARGAMASSAS — Materiais de construção e pr</option>
+<option value="PAMESA">PAMESA — Materiais de construção e pr</option>
+<option value="ARMAZÉM CORAL">ARMAZÉM CORAL — Materiais de construção e pr</option>
+<option value="VENEZA CONSTRUÇÃO TELEVENDAS">VENEZA CONSTRUÇÃO TELEVENDAS — Materiais de construção e pr</option>
+<option value="ELDORADO TINTAS CASA & CONSTRUÇÃO">ELDORADO TINTAS CASA & CONSTRUÇÃO — Materiais de construção e pr</option>
+<option value="CANAL DA CONSTRUÇÃO TELEVENDAS">CANAL DA CONSTRUÇÃO TELEVENDAS — Materiais de construção e pr</option>
+<option value="FERREIRA COSTA TELEVENDAS">FERREIRA COSTA TELEVENDAS — Materiais MRO</option>
+<option value="PRÉ-MOLDADOS BOM CONSELHO">PRÉ-MOLDADOS BOM CONSELHO — Materiais de construção e pr</option>
+<option value="WALTER LOPES PRÉ-FABRICADOS">WALTER LOPES PRÉ-FABRICADOS — Materiais de construção e pr</option>
+<option value="PPP - PREMOLDADOS">PPP - PREMOLDADOS — Materiais de construção e pr</option>
+<option value="CJC CONSTRUÇÕES">CJC CONSTRUÇÕES — Materiais de construção e pr</option>
+<option value="N ISOPOR'S DISTRIBUIDORA">N ISOPOR'S DISTRIBUIDORA — Materiais de construção e pr</option>
+<option value="DISPOR - DISTRIBUIDOR DE EPS">DISPOR - DISTRIBUIDOR DE EPS — Materiais de construção e pr</option>
+<option value="ARMAZÉM RIBEIRA RN">ARMAZÉM RIBEIRA RN — Materiais de marcenaria</option>
+<option value="GMAD JAMAD MADEIRAS">GMAD JAMAD MADEIRAS — Materiais de marcenaria</option>
+<option value="COMJOL">COMJOL — Materiais de construção e pr</option>
+<option value="LAMPADINHA">LAMPADINHA — Materiais elétricos</option>
+<option value="IVANLUX MATERIAIS ELÉTRICOS">IVANLUX MATERIAIS ELÉTRICOS — Materiais elétricos</option>
+<option value="LEVFORT CONSTRUÇÕES">LEVFORT CONSTRUÇÕES — Materiais de construção e pr</option>
+<option value="CONCREARTE CONCRETEIRA">CONCREARTE CONCRETEIRA — Materiais de construção e pr</option>
+<option value="LOJAS 2001 ABREU E LIMA">LOJAS 2001 ABREU E LIMA — Materiais de construção e pr</option>
+<option value="TINTAS IQUINE">TINTAS IQUINE — Materiais de pintura</option>
+<option value="DISBEC DISTRIBUIDORA">DISBEC DISTRIBUIDORA — Materiais de pintura</option>
+<option value="LOJÃO DO PINTOR">LOJÃO DO PINTOR — Materiais de pintura</option>
+<option value="DECOR COLORS RECIFE BOA VIAGEM">DECOR COLORS RECIFE BOA VIAGEM — Materiais de pintura</option>
+<option value="BRAVO EPIS DISTRIBUIDORA">BRAVO EPIS DISTRIBUIDORA — Epi/Epc (segurança do trabal</option>
+<option value="PERNAMBUCO DISTRIBUIDORA | GRUPO PE">PERNAMBUCO DISTRIBUIDORA | GRUPO PE — Epi/Epc (segurança do trabal</option>
+<option value="CASA DO EPI">CASA DO EPI — Epi/Epc (segurança do trabal</option>
+<option value="ATACAREJO DO EPI">ATACAREJO DO EPI — Epi/Epc (segurança do trabal</option>
+<option value="EFACINI INFORMÁTICA">EFACINI INFORMÁTICA — Materiais de TI e automação</option>
+<option value="PONTO TECNOLOGIA">PONTO TECNOLOGIA — Materiais de TI e automação</option>
+<option value="MERCANTIL MEDICAMENTOS">MERCANTIL MEDICAMENTOS — Materiais de expediente</option>
+<option value="PARE FOGO EXTINTORES">PARE FOGO EXTINTORES — Epi/Epc (segurança do trabal</option>
+<option value="KINITOS FESTAS CASA AMARELA">KINITOS FESTAS CASA AMARELA — Materiais de expediente</option>
+<option value="COBREFLEX">COBREFLEX — Materiais elétricos</option>
+<option value="BRASFIO INDÚSTRIA">BRASFIO INDÚSTRIA — Materiais elétricos</option>
+<option value="AM GERADORES">AM GERADORES — Materiais elétricos</option>
+<option value="BR GRUPOS GERADORES">BR GRUPOS GERADORES — Materiais elétricos</option>
+<option value="CR GERADORES">CR GERADORES — Materiais elétricos</option>
+<option value="PERNAMBUCO ALUMINIO">PERNAMBUCO ALUMINIO — Materiais de ferro e aço</option>
+<option value="ARAUJO MADEIRAS">ARAUJO MADEIRAS — Materiais de marcenaria</option>
+<option value="TC FORROS E DIVISÓRIAS">TC FORROS E DIVISÓRIAS — Materiais de drywall</option>
+<option value="ESPAÇO DRYWALL CARUARU">ESPAÇO DRYWALL CARUARU — Materiais de drywall</option>
+<option value="IN DRY - DRYWALL">IN DRY - DRYWALL — Materiais de drywall</option>
+<option value="DIVIMULTI DRYWALL">DIVIMULTI DRYWALL — Materiais de drywall</option>
+<option value="PERFECTTO FORROS E DIVISÓRIAS">PERFECTTO FORROS E DIVISÓRIAS — Materiais de drywall</option>
+<option value="DIVIAÇO DIVISÓRIAS FORROS">DIVIAÇO DIVISÓRIAS FORROS — Materiais de drywall</option>
+<option value="PERFIL FORROS">PERFIL FORROS — Materiais de drywall</option>
+<option value="AÇO & CIA">AÇO & CIA — Materiais de ferro e aço</option>
+<option value="MCC RESÍDUOS">MCC RESÍDUOS — Materiais de construção e pr</option>
+<option value="PAPA METRALHA">PAPA METRALHA — Materiais de construção e pr</option>
+<option value="VALDENIO CAÇAMBAS CARUARU">VALDENIO CAÇAMBAS CARUARU — Materiais de construção e pr</option>
+<option value="MESTRE DA OBRA | LOCAÇÃO DE EQUIPAMENTOS - CARUARU">MESTRE DA OBRA | LOCAÇÃO DE EQUIPAMENTOS - CARUARU — Materiais de construção e pr</option>
+<option value="ARMAZÉM COLORADO CARUARU">ARMAZÉM COLORADO CARUARU — Materiais de construção e pr</option>
+<option value="COMERCIAL BATISTA CARUARU">COMERCIAL BATISTA CARUARU — Materiais de construção e pr</option>
+<option value="ARMAZÉM MACOL CARUARU">ARMAZÉM MACOL CARUARU — Materiais de construção e pr</option>
+<option value="COMERCIAL JUNIOR CARUARU">COMERCIAL JUNIOR CARUARU — Materiais de construção e pr</option>
+<option value="LOJA DO MECÂNICO TELEVENDAS">LOJA DO MECÂNICO TELEVENDAS — Materiais MRO</option>
+<option value="PERFIL TUBOS CARUARU">PERFIL TUBOS CARUARU — Materiais de ferro e aço</option>
+<option value="Top Mix Metais E Esquadrias">Top Mix Metais E Esquadrias — Materiais de ferro e aço</option>
+<option value="PALMA PARAFUSOS">PALMA PARAFUSOS — Materiais MRO</option>
+</select>
+          <div class="forn-info" id="fi0"></div>
+          <input id="vl0" placeholder="R$ valor" oninput="rc()">
+          <input id="pr0" placeholder="Prazo">
+          <label class="pdf-u" id="pu0">📎 PDF<input type="file" accept=".pdf,image/*" id="pf0" onchange="mkP(0)"></label>
+        </div>
+        <div class="cc" id="cc1">
+          <div class="cc-lbl">Fornecedor B</div>
+          <select id="fn1" onchange="onFC(1)"><option value="">Selecione o fornecedor...</option>
+<option value="LOGNET">LOGNET — Materiais de TI e automação</option>
+<option value="MICRO OFFICE">MICRO OFFICE — Materiais de TI e automação</option>
+<option value="RECIFETRONIC">RECIFETRONIC — Materiais de TI e automação</option>
+<option value="EXPRESSO INFORMÁLTICA">EXPRESSO INFORMÁLTICA — Materiais de TI e automação</option>
+<option value="GAMA INFORMÁTICA">GAMA INFORMÁTICA — Materiais de TI e automação</option>
+<option value="TECHNO SPACE">TECHNO SPACE — Materiais de TI e automação</option>
+<option value="SISTEMAQ">SISTEMAQ — Materiais de TI e automação</option>
+<option value="GMI DISTRIBUIDORA">GMI DISTRIBUIDORA — Materiais de TI e automação</option>
+<option value="HG CODE SOLUTIONS">HG CODE SOLUTIONS — Materiais de TI e automação</option>
+<option value="HX SOLUTIONS">HX SOLUTIONS — Materiais de TI e automação</option>
+<option value="KGM LAN DISTRIBUIDORA">KGM LAN DISTRIBUIDORA — Monitoramento e CFTV</option>
+<option value="TNT INFO">TNT INFO — Materiais de TI e automação</option>
+<option value="BZ TECH">BZ TECH — Materiais de TI e automação</option>
+<option value="CIA DO NOBREAK">CIA DO NOBREAK — Materiais de TI e automação</option>
+<option value="PROCESSTEC">PROCESSTEC — Materiais de TI e automação</option>
+<option value="ILAND SOLUÇÕES">ILAND SOLUÇÕES — Materiais de TI e automação</option>
+<option value="LEMOS TELECOM">LEMOS TELECOM — Materiais de TI e automação</option>
+<option value="TELCABOS DISTRIBUIDORA">TELCABOS DISTRIBUIDORA — Materiais de TI e automação</option>
+<option value="PRO4CE AUTOMAÇÃO">PRO4CE AUTOMAÇÃO — Materiais de TI e automação</option>
+<option value="COOPTEC SOLUÇÕES">COOPTEC SOLUÇÕES — Materiais de TI e automação</option>
+<option value="JAGUAR MAT. ELÉTRICOS">JAGUAR MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="MAFEMA MAT. ELÉTRICOS">MAFEMA MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="RIDEL MAT. ELÉTRICOS">RIDEL MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="RESSEG DISTRIBUIDORA">RESSEG DISTRIBUIDORA — Materiais MRO</option>
+<option value="ESPERANÇA NORDESTE">ESPERANÇA NORDESTE — Materiais MRO</option>
+<option value="RENASCER DISTRIBUIDORA">RENASCER DISTRIBUIDORA — Materiais MRO</option>
+<option value="DIMENSIONAL MAT. ELÉTRICOS">DIMENSIONAL MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="PJ NEBLINA MAT. ELÉTRICOS">PJ NEBLINA MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="PORTELA DISTRIBUIDORA">PORTELA DISTRIBUIDORA — Materiais elétricos</option>
+<option value="NORTEL SUPRIMENTOS">NORTEL SUPRIMENTOS — Materiais elétricos</option>
+<option value="AÇOMAIS OLINDA">AÇOMAIS OLINDA — Materiais de ferro e aço</option>
+<option value="CM PRODUTOS SIDERÚRGICOS">CM PRODUTOS SIDERÚRGICOS — Materiais de ferro e aço</option>
+<option value="NOVO NORDESTE ABREU">NOVO NORDESTE ABREU — Materiais de ferro e aço</option>
+<option value="MEGA NORDESTE CABO">MEGA NORDESTE CABO — Materiais de ferro e aço</option>
+<option value="FERRO E AÇO CAMARAGIBE">FERRO E AÇO CAMARAGIBE — Materiais de ferro e aço</option>
+<option value="IDEAL FERRO E AÇO">IDEAL FERRO E AÇO — Materiais de ferro e aço</option>
+<option value="ARCELORMITTAL BRASIL">ARCELORMITTAL BRASIL — Materiais de ferro e aço</option>
+<option value="COMERCIAL GERDAU">COMERCIAL GERDAU — Materiais de ferro e aço</option>
+<option value="CAFÉ PETINHO">CAFÉ PETINHO — Materiais de expediente</option>
+<option value="GRUPO FORTPEL">GRUPO FORTPEL — Materiais de expediente</option>
+<option value="MAXXISUPRI DISTRIBUIDORA">MAXXISUPRI DISTRIBUIDORA — Materiais de expediente</option>
+<option value="KALUNGA PATTEO">KALUNGA PATTEO — Materiais de expediente</option>
+<option value="MUNDO DA IMPERMEABILIZAÇÃO">MUNDO DA IMPERMEABILIZAÇÃO — Materiais de construção e pr</option>
+<option value="CASIMPER IMPERMEABILIZAÇÃO">CASIMPER IMPERMEABILIZAÇÃO — Materiais de construção e pr</option>
+<option value="MAXXCOM IMPERMEABILIZAÇÃO">MAXXCOM IMPERMEABILIZAÇÃO — Materiais de construção e pr</option>
+<option value="DINAMIKA SOLUÇÕES">DINAMIKA SOLUÇÕES — Imobilizado</option>
+<option value="MADECENTER">MADECENTER — Materiais de marcenaria</option>
+<option value="FERREIRA PINTO">FERREIRA PINTO — Materiais de marcenaria</option>
+<option value="ARMAZÉM RIBEIRA">ARMAZÉM RIBEIRA — Materiais de marcenaria</option>
+<option value="LEO MADEIRAS">LEO MADEIRAS — Materiais de marcenaria</option>
+<option value="VAREJÃO DA MADEIRA">VAREJÃO DA MADEIRA — Materiais de marcenaria</option>
+<option value="MADEPORT">MADEPORT — Materiais de marcenaria</option>
+<option value="JOSEMAR">JOSEMAR — Frete</option>
+<option value="EDUARDO">EDUARDO — Frete</option>
+<option value="IMPERIO MÓVEIS TELEVENDAS">IMPERIO MÓVEIS TELEVENDAS — Móveis e eletro</option>
+<option value="MILLENA MOVEIS TELEVENDAS">MILLENA MOVEIS TELEVENDAS — Móveis e eletro</option>
+<option value="LED NORDESTE">LED NORDESTE — Iluminação</option>
+<option value="GRUPO PJ ILUMINAÇÃO">GRUPO PJ ILUMINAÇÃO — Iluminação</option>
+<option value="NAGA SOLUÇÕES">NAGA SOLUÇÕES — Materiais de expediente</option>
+<option value="PEPAC EMBALAGENS">PEPAC EMBALAGENS — Materiais de expediente</option>
+<option value="ALLTAPE FITAS">ALLTAPE FITAS — Materiais de expediente</option>
+<option value="SUZANO PAPEL TELEVENDAS">SUZANO PAPEL TELEVENDAS — Materiais de expediente</option>
+<option value="LOJA DO CONDOMINIO TELEVENDAS">LOJA DO CONDOMINIO TELEVENDAS — Materiais MRO</option>
+<option value="BACCHI ARTEFATOS DE FERRO">BACCHI ARTEFATOS DE FERRO — Marketing</option>
+<option value="ACIOMEC EMBALAGENS">ACIOMEC EMBALAGENS — Materiais de expediente</option>
+<option value="SÃO BRAZ">SÃO BRAZ — Materiais de expediente</option>
+<option value="EKKO COPOS E BRINDES">EKKO COPOS E BRINDES — Materiais de expediente</option>
+<option value="FLEX EMBALAGENS PLÁSTICAS">FLEX EMBALAGENS PLÁSTICAS — Materiais de expediente</option>
+<option value="ETIQ PLAST TRAVA ANEL">ETIQ PLAST TRAVA ANEL — Materiais de expediente</option>
+<option value="ART LED ILUMINAÇÃO">ART LED ILUMINAÇÃO — Iluminação</option>
+<option value="MODE ON ILUMINAÇÃO">MODE ON ILUMINAÇÃO — Iluminação</option>
+<option value="DUFRIO REFRIGERAÇÃO">DUFRIO REFRIGERAÇÃO — Materiais de refrigeração</option>
+<option value="FRIGELAR">FRIGELAR — Materiais de refrigeração</option>
+<option value="FRIOPEÇAS">FRIOPEÇAS — Materiais de refrigeração</option>
+<option value="CLIMA RIO">CLIMA RIO — Materiais de refrigeração</option>
+<option value="NORTE PEÇAS REFRIGERAÇÃO">NORTE PEÇAS REFRIGERAÇÃO — Materiais de refrigeração</option>
+<option value="NORDAP REFRIGERAÇÃO">NORDAP REFRIGERAÇÃO — Materiais de refrigeração</option>
+<option value="GLOBAL MUSIC INSTRUMENTOS / INNOVEX DISTRIBUIDORA">GLOBAL MUSIC INSTRUMENTOS / INNOVEX DISTRIBUIDORA — Imobilizado</option>
+<option value="DIGITAL COMERCIO">DIGITAL COMERCIO — Iluminação</option>
+<option value="JUNGHEINRICH EQUIPAMENTOS">JUNGHEINRICH EQUIPAMENTOS — Imobilizado</option>
+<option value="PRENORTE FABRICADOS">PRENORTE FABRICADOS — Materiais de construção e pr</option>
+<option value="DO MESTRE ARGAMASSAS">DO MESTRE ARGAMASSAS — Materiais de construção e pr</option>
+<option value="PAMESA">PAMESA — Materiais de construção e pr</option>
+<option value="ARMAZÉM CORAL">ARMAZÉM CORAL — Materiais de construção e pr</option>
+<option value="VENEZA CONSTRUÇÃO TELEVENDAS">VENEZA CONSTRUÇÃO TELEVENDAS — Materiais de construção e pr</option>
+<option value="ELDORADO TINTAS CASA & CONSTRUÇÃO">ELDORADO TINTAS CASA & CONSTRUÇÃO — Materiais de construção e pr</option>
+<option value="CANAL DA CONSTRUÇÃO TELEVENDAS">CANAL DA CONSTRUÇÃO TELEVENDAS — Materiais de construção e pr</option>
+<option value="FERREIRA COSTA TELEVENDAS">FERREIRA COSTA TELEVENDAS — Materiais MRO</option>
+<option value="PRÉ-MOLDADOS BOM CONSELHO">PRÉ-MOLDADOS BOM CONSELHO — Materiais de construção e pr</option>
+<option value="WALTER LOPES PRÉ-FABRICADOS">WALTER LOPES PRÉ-FABRICADOS — Materiais de construção e pr</option>
+<option value="PPP - PREMOLDADOS">PPP - PREMOLDADOS — Materiais de construção e pr</option>
+<option value="CJC CONSTRUÇÕES">CJC CONSTRUÇÕES — Materiais de construção e pr</option>
+<option value="N ISOPOR'S DISTRIBUIDORA">N ISOPOR'S DISTRIBUIDORA — Materiais de construção e pr</option>
+<option value="DISPOR - DISTRIBUIDOR DE EPS">DISPOR - DISTRIBUIDOR DE EPS — Materiais de construção e pr</option>
+<option value="ARMAZÉM RIBEIRA RN">ARMAZÉM RIBEIRA RN — Materiais de marcenaria</option>
+<option value="GMAD JAMAD MADEIRAS">GMAD JAMAD MADEIRAS — Materiais de marcenaria</option>
+<option value="COMJOL">COMJOL — Materiais de construção e pr</option>
+<option value="LAMPADINHA">LAMPADINHA — Materiais elétricos</option>
+<option value="IVANLUX MATERIAIS ELÉTRICOS">IVANLUX MATERIAIS ELÉTRICOS — Materiais elétricos</option>
+<option value="LEVFORT CONSTRUÇÕES">LEVFORT CONSTRUÇÕES — Materiais de construção e pr</option>
+<option value="CONCREARTE CONCRETEIRA">CONCREARTE CONCRETEIRA — Materiais de construção e pr</option>
+<option value="LOJAS 2001 ABREU E LIMA">LOJAS 2001 ABREU E LIMA — Materiais de construção e pr</option>
+<option value="TINTAS IQUINE">TINTAS IQUINE — Materiais de pintura</option>
+<option value="DISBEC DISTRIBUIDORA">DISBEC DISTRIBUIDORA — Materiais de pintura</option>
+<option value="LOJÃO DO PINTOR">LOJÃO DO PINTOR — Materiais de pintura</option>
+<option value="DECOR COLORS RECIFE BOA VIAGEM">DECOR COLORS RECIFE BOA VIAGEM — Materiais de pintura</option>
+<option value="BRAVO EPIS DISTRIBUIDORA">BRAVO EPIS DISTRIBUIDORA — Epi/Epc (segurança do trabal</option>
+<option value="PERNAMBUCO DISTRIBUIDORA | GRUPO PE">PERNAMBUCO DISTRIBUIDORA | GRUPO PE — Epi/Epc (segurança do trabal</option>
+<option value="CASA DO EPI">CASA DO EPI — Epi/Epc (segurança do trabal</option>
+<option value="ATACAREJO DO EPI">ATACAREJO DO EPI — Epi/Epc (segurança do trabal</option>
+<option value="EFACINI INFORMÁTICA">EFACINI INFORMÁTICA — Materiais de TI e automação</option>
+<option value="PONTO TECNOLOGIA">PONTO TECNOLOGIA — Materiais de TI e automação</option>
+<option value="MERCANTIL MEDICAMENTOS">MERCANTIL MEDICAMENTOS — Materiais de expediente</option>
+<option value="PARE FOGO EXTINTORES">PARE FOGO EXTINTORES — Epi/Epc (segurança do trabal</option>
+<option value="KINITOS FESTAS CASA AMARELA">KINITOS FESTAS CASA AMARELA — Materiais de expediente</option>
+<option value="COBREFLEX">COBREFLEX — Materiais elétricos</option>
+<option value="BRASFIO INDÚSTRIA">BRASFIO INDÚSTRIA — Materiais elétricos</option>
+<option value="AM GERADORES">AM GERADORES — Materiais elétricos</option>
+<option value="BR GRUPOS GERADORES">BR GRUPOS GERADORES — Materiais elétricos</option>
+<option value="CR GERADORES">CR GERADORES — Materiais elétricos</option>
+<option value="PERNAMBUCO ALUMINIO">PERNAMBUCO ALUMINIO — Materiais de ferro e aço</option>
+<option value="ARAUJO MADEIRAS">ARAUJO MADEIRAS — Materiais de marcenaria</option>
+<option value="TC FORROS E DIVISÓRIAS">TC FORROS E DIVISÓRIAS — Materiais de drywall</option>
+<option value="ESPAÇO DRYWALL CARUARU">ESPAÇO DRYWALL CARUARU — Materiais de drywall</option>
+<option value="IN DRY - DRYWALL">IN DRY - DRYWALL — Materiais de drywall</option>
+<option value="DIVIMULTI DRYWALL">DIVIMULTI DRYWALL — Materiais de drywall</option>
+<option value="PERFECTTO FORROS E DIVISÓRIAS">PERFECTTO FORROS E DIVISÓRIAS — Materiais de drywall</option>
+<option value="DIVIAÇO DIVISÓRIAS FORROS">DIVIAÇO DIVISÓRIAS FORROS — Materiais de drywall</option>
+<option value="PERFIL FORROS">PERFIL FORROS — Materiais de drywall</option>
+<option value="AÇO & CIA">AÇO & CIA — Materiais de ferro e aço</option>
+<option value="MCC RESÍDUOS">MCC RESÍDUOS — Materiais de construção e pr</option>
+<option value="PAPA METRALHA">PAPA METRALHA — Materiais de construção e pr</option>
+<option value="VALDENIO CAÇAMBAS CARUARU">VALDENIO CAÇAMBAS CARUARU — Materiais de construção e pr</option>
+<option value="MESTRE DA OBRA | LOCAÇÃO DE EQUIPAMENTOS - CARUARU">MESTRE DA OBRA | LOCAÇÃO DE EQUIPAMENTOS - CARUARU — Materiais de construção e pr</option>
+<option value="ARMAZÉM COLORADO CARUARU">ARMAZÉM COLORADO CARUARU — Materiais de construção e pr</option>
+<option value="COMERCIAL BATISTA CARUARU">COMERCIAL BATISTA CARUARU — Materiais de construção e pr</option>
+<option value="ARMAZÉM MACOL CARUARU">ARMAZÉM MACOL CARUARU — Materiais de construção e pr</option>
+<option value="COMERCIAL JUNIOR CARUARU">COMERCIAL JUNIOR CARUARU — Materiais de construção e pr</option>
+<option value="LOJA DO MECÂNICO TELEVENDAS">LOJA DO MECÂNICO TELEVENDAS — Materiais MRO</option>
+<option value="PERFIL TUBOS CARUARU">PERFIL TUBOS CARUARU — Materiais de ferro e aço</option>
+<option value="Top Mix Metais E Esquadrias">Top Mix Metais E Esquadrias — Materiais de ferro e aço</option>
+<option value="PALMA PARAFUSOS">PALMA PARAFUSOS — Materiais MRO</option>
+</select>
+          <div class="forn-info" id="fi1"></div>
+          <input id="vl1" placeholder="R$ valor" oninput="rc()">
+          <input id="pr1" placeholder="Prazo">
+          <label class="pdf-u" id="pu1">📎 PDF<input type="file" accept=".pdf,image/*" id="pf1" onchange="mkP(1)"></label>
+        </div>
+        <div class="cc" id="cc2">
+          <div class="cc-lbl">Fornecedor C</div>
+          <select id="fn2" onchange="onFC(2)"><option value="">Selecione o fornecedor...</option>
+<option value="LOGNET">LOGNET — Materiais de TI e automação</option>
+<option value="MICRO OFFICE">MICRO OFFICE — Materiais de TI e automação</option>
+<option value="RECIFETRONIC">RECIFETRONIC — Materiais de TI e automação</option>
+<option value="EXPRESSO INFORMÁLTICA">EXPRESSO INFORMÁLTICA — Materiais de TI e automação</option>
+<option value="GAMA INFORMÁTICA">GAMA INFORMÁTICA — Materiais de TI e automação</option>
+<option value="TECHNO SPACE">TECHNO SPACE — Materiais de TI e automação</option>
+<option value="SISTEMAQ">SISTEMAQ — Materiais de TI e automação</option>
+<option value="GMI DISTRIBUIDORA">GMI DISTRIBUIDORA — Materiais de TI e automação</option>
+<option value="HG CODE SOLUTIONS">HG CODE SOLUTIONS — Materiais de TI e automação</option>
+<option value="HX SOLUTIONS">HX SOLUTIONS — Materiais de TI e automação</option>
+<option value="KGM LAN DISTRIBUIDORA">KGM LAN DISTRIBUIDORA — Monitoramento e CFTV</option>
+<option value="TNT INFO">TNT INFO — Materiais de TI e automação</option>
+<option value="BZ TECH">BZ TECH — Materiais de TI e automação</option>
+<option value="CIA DO NOBREAK">CIA DO NOBREAK — Materiais de TI e automação</option>
+<option value="PROCESSTEC">PROCESSTEC — Materiais de TI e automação</option>
+<option value="ILAND SOLUÇÕES">ILAND SOLUÇÕES — Materiais de TI e automação</option>
+<option value="LEMOS TELECOM">LEMOS TELECOM — Materiais de TI e automação</option>
+<option value="TELCABOS DISTRIBUIDORA">TELCABOS DISTRIBUIDORA — Materiais de TI e automação</option>
+<option value="PRO4CE AUTOMAÇÃO">PRO4CE AUTOMAÇÃO — Materiais de TI e automação</option>
+<option value="COOPTEC SOLUÇÕES">COOPTEC SOLUÇÕES — Materiais de TI e automação</option>
+<option value="JAGUAR MAT. ELÉTRICOS">JAGUAR MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="MAFEMA MAT. ELÉTRICOS">MAFEMA MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="RIDEL MAT. ELÉTRICOS">RIDEL MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="RESSEG DISTRIBUIDORA">RESSEG DISTRIBUIDORA — Materiais MRO</option>
+<option value="ESPERANÇA NORDESTE">ESPERANÇA NORDESTE — Materiais MRO</option>
+<option value="RENASCER DISTRIBUIDORA">RENASCER DISTRIBUIDORA — Materiais MRO</option>
+<option value="DIMENSIONAL MAT. ELÉTRICOS">DIMENSIONAL MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="PJ NEBLINA MAT. ELÉTRICOS">PJ NEBLINA MAT. ELÉTRICOS — Materiais elétricos</option>
+<option value="PORTELA DISTRIBUIDORA">PORTELA DISTRIBUIDORA — Materiais elétricos</option>
+<option value="NORTEL SUPRIMENTOS">NORTEL SUPRIMENTOS — Materiais elétricos</option>
+<option value="AÇOMAIS OLINDA">AÇOMAIS OLINDA — Materiais de ferro e aço</option>
+<option value="CM PRODUTOS SIDERÚRGICOS">CM PRODUTOS SIDERÚRGICOS — Materiais de ferro e aço</option>
+<option value="NOVO NORDESTE ABREU">NOVO NORDESTE ABREU — Materiais de ferro e aço</option>
+<option value="MEGA NORDESTE CABO">MEGA NORDESTE CABO — Materiais de ferro e aço</option>
+<option value="FERRO E AÇO CAMARAGIBE">FERRO E AÇO CAMARAGIBE — Materiais de ferro e aço</option>
+<option value="IDEAL FERRO E AÇO">IDEAL FERRO E AÇO — Materiais de ferro e aço</option>
+<option value="ARCELORMITTAL BRASIL">ARCELORMITTAL BRASIL — Materiais de ferro e aço</option>
+<option value="COMERCIAL GERDAU">COMERCIAL GERDAU — Materiais de ferro e aço</option>
+<option value="CAFÉ PETINHO">CAFÉ PETINHO — Materiais de expediente</option>
+<option value="GRUPO FORTPEL">GRUPO FORTPEL — Materiais de expediente</option>
+<option value="MAXXISUPRI DISTRIBUIDORA">MAXXISUPRI DISTRIBUIDORA — Materiais de expediente</option>
+<option value="KALUNGA PATTEO">KALUNGA PATTEO — Materiais de expediente</option>
+<option value="MUNDO DA IMPERMEABILIZAÇÃO">MUNDO DA IMPERMEABILIZAÇÃO — Materiais de construção e pr</option>
+<option value="CASIMPER IMPERMEABILIZAÇÃO">CASIMPER IMPERMEABILIZAÇÃO — Materiais de construção e pr</option>
+<option value="MAXXCOM IMPERMEABILIZAÇÃO">MAXXCOM IMPERMEABILIZAÇÃO — Materiais de construção e pr</option>
+<option value="DINAMIKA SOLUÇÕES">DINAMIKA SOLUÇÕES — Imobilizado</option>
+<option value="MADECENTER">MADECENTER — Materiais de marcenaria</option>
+<option value="FERREIRA PINTO">FERREIRA PINTO — Materiais de marcenaria</option>
+<option value="ARMAZÉM RIBEIRA">ARMAZÉM RIBEIRA — Materiais de marcenaria</option>
+<option value="LEO MADEIRAS">LEO MADEIRAS — Materiais de marcenaria</option>
+<option value="VAREJÃO DA MADEIRA">VAREJÃO DA MADEIRA — Materiais de marcenaria</option>
+<option value="MADEPORT">MADEPORT — Materiais de marcenaria</option>
+<option value="JOSEMAR">JOSEMAR — Frete</option>
+<option value="EDUARDO">EDUARDO — Frete</option>
+<option value="IMPERIO MÓVEIS TELEVENDAS">IMPERIO MÓVEIS TELEVENDAS — Móveis e eletro</option>
+<option value="MILLENA MOVEIS TELEVENDAS">MILLENA MOVEIS TELEVENDAS — Móveis e eletro</option>
+<option value="LED NORDESTE">LED NORDESTE — Iluminação</option>
+<option value="GRUPO PJ ILUMINAÇÃO">GRUPO PJ ILUMINAÇÃO — Iluminação</option>
+<option value="NAGA SOLUÇÕES">NAGA SOLUÇÕES — Materiais de expediente</option>
+<option value="PEPAC EMBALAGENS">PEPAC EMBALAGENS — Materiais de expediente</option>
+<option value="ALLTAPE FITAS">ALLTAPE FITAS — Materiais de expediente</option>
+<option value="SUZANO PAPEL TELEVENDAS">SUZANO PAPEL TELEVENDAS — Materiais de expediente</option>
+<option value="LOJA DO CONDOMINIO TELEVENDAS">LOJA DO CONDOMINIO TELEVENDAS — Materiais MRO</option>
+<option value="BACCHI ARTEFATOS DE FERRO">BACCHI ARTEFATOS DE FERRO — Marketing</option>
+<option value="ACIOMEC EMBALAGENS">ACIOMEC EMBALAGENS — Materiais de expediente</option>
+<option value="SÃO BRAZ">SÃO BRAZ — Materiais de expediente</option>
+<option value="EKKO COPOS E BRINDES">EKKO COPOS E BRINDES — Materiais de expediente</option>
+<option value="FLEX EMBALAGENS PLÁSTICAS">FLEX EMBALAGENS PLÁSTICAS — Materiais de expediente</option>
+<option value="ETIQ PLAST TRAVA ANEL">ETIQ PLAST TRAVA ANEL — Materiais de expediente</option>
+<option value="ART LED ILUMINAÇÃO">ART LED ILUMINAÇÃO — Iluminação</option>
+<option value="MODE ON ILUMINAÇÃO">MODE ON ILUMINAÇÃO — Iluminação</option>
+<option value="DUFRIO REFRIGERAÇÃO">DUFRIO REFRIGERAÇÃO — Materiais de refrigeração</option>
+<option value="FRIGELAR">FRIGELAR — Materiais de refrigeração</option>
+<option value="FRIOPEÇAS">FRIOPEÇAS — Materiais de refrigeração</option>
+<option value="CLIMA RIO">CLIMA RIO — Materiais de refrigeração</option>
+<option value="NORTE PEÇAS REFRIGERAÇÃO">NORTE PEÇAS REFRIGERAÇÃO — Materiais de refrigeração</option>
+<option value="NORDAP REFRIGERAÇÃO">NORDAP REFRIGERAÇÃO — Materiais de refrigeração</option>
+<option value="GLOBAL MUSIC INSTRUMENTOS / INNOVEX DISTRIBUIDORA">GLOBAL MUSIC INSTRUMENTOS / INNOVEX DISTRIBUIDORA — Imobilizado</option>
+<option value="DIGITAL COMERCIO">DIGITAL COMERCIO — Iluminação</option>
+<option value="JUNGHEINRICH EQUIPAMENTOS">JUNGHEINRICH EQUIPAMENTOS — Imobilizado</option>
+<option value="PRENORTE FABRICADOS">PRENORTE FABRICADOS — Materiais de construção e pr</option>
+<option value="DO MESTRE ARGAMASSAS">DO MESTRE ARGAMASSAS — Materiais de construção e pr</option>
+<option value="PAMESA">PAMESA — Materiais de construção e pr</option>
+<option value="ARMAZÉM CORAL">ARMAZÉM CORAL — Materiais de construção e pr</option>
+<option value="VENEZA CONSTRUÇÃO TELEVENDAS">VENEZA CONSTRUÇÃO TELEVENDAS — Materiais de construção e pr</option>
+<option value="ELDORADO TINTAS CASA & CONSTRUÇÃO">ELDORADO TINTAS CASA & CONSTRUÇÃO — Materiais de construção e pr</option>
+<option value="CANAL DA CONSTRUÇÃO TELEVENDAS">CANAL DA CONSTRUÇÃO TELEVENDAS — Materiais de construção e pr</option>
+<option value="FERREIRA COSTA TELEVENDAS">FERREIRA COSTA TELEVENDAS — Materiais MRO</option>
+<option value="PRÉ-MOLDADOS BOM CONSELHO">PRÉ-MOLDADOS BOM CONSELHO — Materiais de construção e pr</option>
+<option value="WALTER LOPES PRÉ-FABRICADOS">WALTER LOPES PRÉ-FABRICADOS — Materiais de construção e pr</option>
+<option value="PPP - PREMOLDADOS">PPP - PREMOLDADOS — Materiais de construção e pr</option>
+<option value="CJC CONSTRUÇÕES">CJC CONSTRUÇÕES — Materiais de construção e pr</option>
+<option value="N ISOPOR'S DISTRIBUIDORA">N ISOPOR'S DISTRIBUIDORA — Materiais de construção e pr</option>
+<option value="DISPOR - DISTRIBUIDOR DE EPS">DISPOR - DISTRIBUIDOR DE EPS — Materiais de construção e pr</option>
+<option value="ARMAZÉM RIBEIRA RN">ARMAZÉM RIBEIRA RN — Materiais de marcenaria</option>
+<option value="GMAD JAMAD MADEIRAS">GMAD JAMAD MADEIRAS — Materiais de marcenaria</option>
+<option value="COMJOL">COMJOL — Materiais de construção e pr</option>
+<option value="LAMPADINHA">LAMPADINHA — Materiais elétricos</option>
+<option value="IVANLUX MATERIAIS ELÉTRICOS">IVANLUX MATERIAIS ELÉTRICOS — Materiais elétricos</option>
+<option value="LEVFORT CONSTRUÇÕES">LEVFORT CONSTRUÇÕES — Materiais de construção e pr</option>
+<option value="CONCREARTE CONCRETEIRA">CONCREARTE CONCRETEIRA — Materiais de construção e pr</option>
+<option value="LOJAS 2001 ABREU E LIMA">LOJAS 2001 ABREU E LIMA — Materiais de construção e pr</option>
+<option value="TINTAS IQUINE">TINTAS IQUINE — Materiais de pintura</option>
+<option value="DISBEC DISTRIBUIDORA">DISBEC DISTRIBUIDORA — Materiais de pintura</option>
+<option value="LOJÃO DO PINTOR">LOJÃO DO PINTOR — Materiais de pintura</option>
+<option value="DECOR COLORS RECIFE BOA VIAGEM">DECOR COLORS RECIFE BOA VIAGEM — Materiais de pintura</option>
+<option value="BRAVO EPIS DISTRIBUIDORA">BRAVO EPIS DISTRIBUIDORA — Epi/Epc (segurança do trabal</option>
+<option value="PERNAMBUCO DISTRIBUIDORA | GRUPO PE">PERNAMBUCO DISTRIBUIDORA | GRUPO PE — Epi/Epc (segurança do trabal</option>
+<option value="CASA DO EPI">CASA DO EPI — Epi/Epc (segurança do trabal</option>
+<option value="ATACAREJO DO EPI">ATACAREJO DO EPI — Epi/Epc (segurança do trabal</option>
+<option value="EFACINI INFORMÁTICA">EFACINI INFORMÁTICA — Materiais de TI e automação</option>
+<option value="PONTO TECNOLOGIA">PONTO TECNOLOGIA — Materiais de TI e automação</option>
+<option value="MERCANTIL MEDICAMENTOS">MERCANTIL MEDICAMENTOS — Materiais de expediente</option>
+<option value="PARE FOGO EXTINTORES">PARE FOGO EXTINTORES — Epi/Epc (segurança do trabal</option>
+<option value="KINITOS FESTAS CASA AMARELA">KINITOS FESTAS CASA AMARELA — Materiais de expediente</option>
+<option value="COBREFLEX">COBREFLEX — Materiais elétricos</option>
+<option value="BRASFIO INDÚSTRIA">BRASFIO INDÚSTRIA — Materiais elétricos</option>
+<option value="AM GERADORES">AM GERADORES — Materiais elétricos</option>
+<option value="BR GRUPOS GERADORES">BR GRUPOS GERADORES — Materiais elétricos</option>
+<option value="CR GERADORES">CR GERADORES — Materiais elétricos</option>
+<option value="PERNAMBUCO ALUMINIO">PERNAMBUCO ALUMINIO — Materiais de ferro e aço</option>
+<option value="ARAUJO MADEIRAS">ARAUJO MADEIRAS — Materiais de marcenaria</option>
+<option value="TC FORROS E DIVISÓRIAS">TC FORROS E DIVISÓRIAS — Materiais de drywall</option>
+<option value="ESPAÇO DRYWALL CARUARU">ESPAÇO DRYWALL CARUARU — Materiais de drywall</option>
+<option value="IN DRY - DRYWALL">IN DRY - DRYWALL — Materiais de drywall</option>
+<option value="DIVIMULTI DRYWALL">DIVIMULTI DRYWALL — Materiais de drywall</option>
+<option value="PERFECTTO FORROS E DIVISÓRIAS">PERFECTTO FORROS E DIVISÓRIAS — Materiais de drywall</option>
+<option value="DIVIAÇO DIVISÓRIAS FORROS">DIVIAÇO DIVISÓRIAS FORROS — Materiais de drywall</option>
+<option value="PERFIL FORROS">PERFIL FORROS — Materiais de drywall</option>
+<option value="AÇO & CIA">AÇO & CIA — Materiais de ferro e aço</option>
+<option value="MCC RESÍDUOS">MCC RESÍDUOS — Materiais de construção e pr</option>
+<option value="PAPA METRALHA">PAPA METRALHA — Materiais de construção e pr</option>
+<option value="VALDENIO CAÇAMBAS CARUARU">VALDENIO CAÇAMBAS CARUARU — Materiais de construção e pr</option>
+<option value="MESTRE DA OBRA | LOCAÇÃO DE EQUIPAMENTOS - CARUARU">MESTRE DA OBRA | LOCAÇÃO DE EQUIPAMENTOS - CARUARU — Materiais de construção e pr</option>
+<option value="ARMAZÉM COLORADO CARUARU">ARMAZÉM COLORADO CARUARU — Materiais de construção e pr</option>
+<option value="COMERCIAL BATISTA CARUARU">COMERCIAL BATISTA CARUARU — Materiais de construção e pr</option>
+<option value="ARMAZÉM MACOL CARUARU">ARMAZÉM MACOL CARUARU — Materiais de construção e pr</option>
+<option value="COMERCIAL JUNIOR CARUARU">COMERCIAL JUNIOR CARUARU — Materiais de construção e pr</option>
+<option value="LOJA DO MECÂNICO TELEVENDAS">LOJA DO MECÂNICO TELEVENDAS — Materiais MRO</option>
+<option value="PERFIL TUBOS CARUARU">PERFIL TUBOS CARUARU — Materiais de ferro e aço</option>
+<option value="Top Mix Metais E Esquadrias">Top Mix Metais E Esquadrias — Materiais de ferro e aço</option>
+<option value="PALMA PARAFUSOS">PALMA PARAFUSOS — Materiais MRO</option>
+</select>
+          <div class="forn-info" id="fi2"></div>
+          <input id="vl2" placeholder="R$ valor" oninput="rc()">
+          <input id="pr2" placeholder="Prazo">
+          <label class="pdf-u" id="pu2">📎 PDF<input type="file" accept=".pdf,image/*" id="pf2" onchange="mkP(2)"></label>
+        </div>
+      </div>
+      <div class="eco-form" id="ef">
+        <div class="eco-r"><span>Menor preço</span><span id="ef-mn" style="font-weight:700;color:var(--vd)"></span></div>
+        <div class="eco-r"><span>Maior preço</span><span id="ef-mx"></span></div>
+        <div class="eco-r t"><span>Economia potencial</span><span id="ef-eco"></span></div>
+      </div>
+      <div class="al5k" id="al5k">⚠️ Valor acima de R$ 5.000 — irá para aprovação da Presidência (Paulo).</div>
+      <button class="bsend" id="btn-env" onclick="enviar()">Enviar solicitação →</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><span class="cht">Importar Excel</span></div>
+    <div style="padding:.85rem 1.1rem">
+      <div class="dz" id="dz"><input type="file" accept=".xlsx,.xls" id="inp-xls" onchange="lerXLS(this)">
+        <div style="font-size:26px;margin-bottom:5px">📊</div>
+        <div style="font-size:13px;font-weight:700;color:var(--az2);margin-bottom:2px">Arraste ou clique para importar</div>
+        <div style="font-size:10px;color:var(--tx3)">Planilha de pedidos Esposende</div>
+      </div>
+      <div id="xls-ok" style="display:none" class="st-bar">
+        <div class="st-dot" style="background:var(--vd)"></div>
+        <span id="xls-msg">Importado</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="aba-admin" class="w" style="display:none">
+  <div class="card">
+    <div class="card-hd"><span class="cht">Usuários</span></div>
+    <div>
+      <div class="user-row"><div style="display:flex;align-items:center"><div class="user-av" style="background:#F5F3FF;color:#6D28D9">PA</div><div><div style="font-size:13px;font-weight:600">Paulo</div><div style="font-size:10px;color:var(--tx3)">Presidente — aprova compras</div></div></div><span class="pb pb-presidente">Presidente</span></div>
+      <div class="user-row"><div style="display:flex;align-items:center"><div class="user-av" style="background:#F0FDF4;color:#15803D">RC</div><div><div style="font-size:13px;font-weight:600">Ricardo</div><div style="font-size:10px;color:var(--tx3)">Admin / Gestor / Auditoria</div></div></div><span class="pb pb-admin">Admin</span></div>
+      <div class="user-row"><div style="display:flex;align-items:center"><div class="user-av" style="background:#EFF6FF;color:#1D4ED8">JO</div><div><div style="font-size:13px;font-weight:600">Jony</div><div style="font-size:10px;color:var(--tx3)">Comprador</div></div></div><span class="pb pb-comprador">Comprador</span></div>
+      <div class="user-row"><div style="display:flex;align-items:center"><div class="user-av" style="background:#EFF6FF;color:#1D4ED8">VI</div><div><div style="font-size:13px;font-weight:600">Victor</div><div style="font-size:10px;color:var(--tx3)">Comprador</div></div></div><span class="pb pb-comprador">Comprador</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><span class="cht">Configurações</span></div>
+    <div style="padding:.85rem 1.1rem">
+      <div class="fg"><label class="fl">Limite para aprovação (R$)</label><input class="fi" id="cfg-limite" type="number" value="5000"></div>
+      <div class="fg"><label class="fl">WhatsApp Presidência</label><input class="fi" id="cfg-wa" value="5511975382103" type="tel"></div>
+      <button class="bsend" style="margin-top:0;padding:10px" onclick="suc('✅','Configurações salvas','Alterações aplicadas com sucesso.')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="conf-ov" id="conf-ov" onclick="fConf(event)">
+  <div class="conf-sh" onclick="event.stopPropagation()">
+    <div class="conf-t" id="conf-t">Confirmar?</div>
+    <div class="conf-d" id="conf-d"></div>
+    <div class="conf-bs" style="margin-top:14px">
+      <button class="bre" style="padding:11px;font-size:12px" onclick="fConf()">Cancelar</button>
+      <button class="bap" style="padding:11px;font-size:12px" id="conf-ok" onclick="confAcao()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUC -->
+<div class="suc-ov" id="suc-ov">
+  <div class="suc-bx">
+    <div class="suc-i" id="suc-i">✅</div>
+    <div class="suc-t" id="suc-t">Pronto!</div>
+    <div class="suc-d" id="suc-d"></div>
+    <button class="suc-btn" onclick="fSuc()">Ok</button>
+  </div>
+</div>
+
+<script>
+var SB_URL='https://lknrrohrtgljwrbxftnv.supabase.co';
+var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxrbnJyb2hydGdsandyYnhmdG52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0NTcxMDIsImV4cCI6MjA5NjAzMzEwMn0.qu3UybEQOPfFIdz_NPmT8wgVZpWYqnvNpyOdtZHirsM';
+var LIMITE=5000;
+var WA_TEL='5511975382103';
+var FORN=[{"nome": "LOGNET", "area": "Materiais de TI e automação", "vendedor": "Thiago / Hailton", "contato": "(81) 99701-1869 / (81) 98832-4748", "pagamento": "À VISTA"}, {"nome": "MICRO OFFICE", "area": "Materiais de TI e automação", "vendedor": "Lucilene / Jordania", "contato": "(81) 2129-7554 / (81) 2129-7552", "pagamento": "À VISTA"}, {"nome": "RECIFETRONIC", "area": "Materiais de TI e automação", "vendedor": "Oliveira", "contato": "(81) 4113-0042", "pagamento": "À VISTA / BOLETO"}, {"nome": "EXPRESSO INFORMÁLTICA", "area": "Materiais de TI e automação", "vendedor": "Marcella", "contato": "(81) 98816-6868", "pagamento": "À VISTA / BOLETO ANTECIPADO"}, {"nome": "GAMA INFORMÁTICA", "area": "Materiais de TI e automação", "vendedor": "Gleison", "contato": "(81) 99617-8828", "pagamento": "À VISTA / BOLETO ANTECIPADO"}, {"nome": "TECHNO SPACE", "area": "Materiais de TI e automação", "vendedor": "Kelvin", "contato": "(81) 99166-9411", "pagamento": "BOLETO"}, {"nome": "SISTEMAQ", "area": "Materiais de TI e automação", "vendedor": "Caio / Laís", "contato": "(81) 98231-9169 / (81) 99833-0576", "pagamento": "BOLETO"}, {"nome": "GMI DISTRIBUIDORA", "area": "Materiais de TI e automação", "vendedor": "Romério", "contato": "(83) 99940-4771", "pagamento": "À VISTA"}, {"nome": "HG CODE SOLUTIONS", "area": "Materiais de TI e automação", "vendedor": "Patricia / Helder", "contato": "(81) 99269-4353 / (81) 99323-1432", "pagamento": "À VISTA"}, {"nome": "HX SOLUTIONS", "area": "Materiais de TI e automação", "vendedor": "Tovar / Argemiro", "contato": "(81) 98999-5889 / (81) 99936-6007", "pagamento": "À VISTA"}, {"nome": "KGM LAN DISTRIBUIDORA", "area": "Monitoramento e CFTV", "vendedor": "Valéria / Rita", "contato": "(81) 99197-4388 / (81) 999679-1951", "pagamento": "BOLETO"}, {"nome": "TNT INFO", "area": "Materiais de TI e automação", "vendedor": "Gleicy", "contato": "(19) 99900-5263", "pagamento": "À VISTA"}, {"nome": "BZ TECH", "area": "Materiais de TI e automação", "vendedor": "Nickaeli", "contato": "(41) 99233-7949", "pagamento": "À VISTA"}, {"nome": "CIA DO NOBREAK", "area": "Materiais de TI e automação", "vendedor": "Carlos", "contato": "(81) 98886-8207", "pagamento": "BOLETO"}, {"nome": "PROCESSTEC", "area": "Materiais de TI e automação", "vendedor": "Laura", "contato": "(81) 9906-8474", "pagamento": "À VISTA"}, {"nome": "ILAND SOLUÇÕES", "area": "Materiais de TI e automação", "vendedor": "Kerolly", "contato": "(81)97341-1361", "pagamento": "À VISTA"}, {"nome": "LEMOS TELECOM", "area": "Materiais de TI e automação", "vendedor": "Flávio", "contato": "(81) 98664-8548", "pagamento": "BOLETO"}, {"nome": "TELCABOS DISTRIBUIDORA", "area": "Materiais de TI e automação", "vendedor": "Rosival", "contato": "(81) 98140-9473", "pagamento": "À VISTA"}, {"nome": "PRO4CE AUTOMAÇÃO", "area": "Materiais de TI e automação", "vendedor": "Amanda", "contato": "(41) 98836-2591", "pagamento": "À VISTA"}, {"nome": "COOPTEC SOLUÇÕES", "area": "Materiais de TI e automação", "vendedor": "Leandro", "contato": "(81) 97905-6187", "pagamento": "À VISTA"}, {"nome": "JAGUAR MAT. ELÉTRICOS", "area": "Materiais elétricos", "vendedor": "Tiago", "contato": "(81) 97904-0140", "pagamento": "BOLETO"}, {"nome": "MAFEMA MAT. ELÉTRICOS", "area": "Materiais elétricos", "vendedor": "Manuel", "contato": "(81) 99757-0019", "pagamento": "BOLETO"}, {"nome": "RIDEL MAT. ELÉTRICOS", "area": "Materiais elétricos", "vendedor": "Anderson", "contato": "(81) 98862-2839", "pagamento": "BOLETO"}, {"nome": "RESSEG DISTRIBUIDORA", "area": "Materiais MRO", "vendedor": "Magna", "contato": "(81) 98830-7824", "pagamento": "BOLETO"}, {"nome": "ESPERANÇA NORDESTE", "area": "Materiais MRO", "vendedor": "Berg", "contato": "(81) 99193-1385", "pagamento": "BOLETO"}, {"nome": "RENASCER DISTRIBUIDORA", "area": "Materiais MRO", "vendedor": "Helio", "contato": "(81) 99144-3714", "pagamento": "BOLETO"}, {"nome": "DIMENSIONAL MAT. ELÉTRICOS", "area": "Materiais elétricos", "vendedor": "Isabel", "contato": "(81) 98694-1430", "pagamento": "À VISTA"}, {"nome": "PJ NEBLINA MAT. ELÉTRICOS", "area": "Materiais elétricos", "vendedor": "Isabel silva", "contato": "(81) 99621-5860", "pagamento": "À VISTA"}, {"nome": "PORTELA DISTRIBUIDORA", "area": "Materiais elétricos", "vendedor": "Hyrla", "contato": "(81) 99448-1461", "pagamento": "À VISTA"}, {"nome": "NORTEL SUPRIMENTOS", "area": "Materiais elétricos", "vendedor": "Walk", "contato": "(81) 98167-0355", "pagamento": "À VISTA"}, {"nome": "AÇOMAIS OLINDA", "area": "Materiais de ferro e aço", "vendedor": "Mekzael", "contato": "(81) 99244-7794", "pagamento": "À VISTA"}, {"nome": "CM PRODUTOS SIDERÚRGICOS", "area": "Materiais de ferro e aço", "vendedor": "André", "contato": "(81) 99775-2535", "pagamento": "BOLETO"}, {"nome": "NOVO NORDESTE ABREU", "area": "Materiais de ferro e aço", "vendedor": "Márcia", "contato": "(81) 99429-5579", "pagamento": "À VISTA"}, {"nome": "MEGA NORDESTE CABO", "area": "Materiais de ferro e aço", "vendedor": "Rebecca", "contato": "(81) 99128-2069", "pagamento": "À VISTA"}, {"nome": "FERRO E AÇO CAMARAGIBE", "area": "Materiais de ferro e aço", "vendedor": "Fabiane", "contato": "(81) 99218-6676", "pagamento": "À VISTA"}, {"nome": "IDEAL FERRO E AÇO", "area": "Materiais de ferro e aço", "vendedor": "Alexsandra", "contato": "(81) 98694-9084", "pagamento": "À VISTA"}, {"nome": "ARCELORMITTAL BRASIL", "area": "Materiais de ferro e aço", "vendedor": "Zara", "contato": "(81) 97106-2706", "pagamento": "À VISTA"}, {"nome": "COMERCIAL GERDAU", "area": "Materiais de ferro e aço", "vendedor": "Danniel", "contato": "(81) 99434-7477", "pagamento": "À VISTA"}, {"nome": "CAFÉ PETINHO", "area": "Materiais de expediente", "vendedor": "Angélica", "contato": "(81) 98512-1472", "pagamento": "BOLETO"}, {"nome": "GRUPO FORTPEL", "area": "Materiais de expediente", "vendedor": "Ana Paula", "contato": "(81) 3541-3424", "pagamento": "BOLETO"}, {"nome": "MAXXISUPRI DISTRIBUIDORA", "area": "Materiais de expediente", "vendedor": "Caryne", "contato": "(81) 3011-8555", "pagamento": "BOLETO"}, {"nome": "KALUNGA PATTEO", "area": "Materiais de expediente", "vendedor": "Jackson", "contato": "(81) 98784-4129", "pagamento": "À VISTA"}, {"nome": "MUNDO DA IMPERMEABILIZAÇÃO", "area": "Materiais de construção e predial", "vendedor": "Norma", "contato": "(81) 97344-8687", "pagamento": "BOLETO"}, {"nome": "CASIMPER IMPERMEABILIZAÇÃO", "area": "Materiais de construção e predial", "vendedor": "Isabel", "contato": "(81) 98139-7113", "pagamento": "BOLETO"}, {"nome": "MAXXCOM IMPERMEABILIZAÇÃO", "area": "Materiais de construção e predial", "vendedor": "Juci", "contato": "(81) 97914-8407", "pagamento": "BOLETO"}, {"nome": "DINAMIKA SOLUÇÕES", "area": "Imobilizado", "vendedor": "Vânia", "contato": "(81) 4137-0060", "pagamento": "BOLETO"}, {"nome": "MADECENTER", "area": "Materiais de marcenaria", "vendedor": "Gilvania", "contato": "(81) 99431-5763", "pagamento": "À VISTA"}, {"nome": "FERREIRA PINTO", "area": "Materiais de marcenaria", "vendedor": "Simone / Edilene", "contato": "(81) 97347-8741 / (81) 9684-8898", "pagamento": "À VISTA"}, {"nome": "ARMAZÉM RIBEIRA", "area": "Materiais de marcenaria", "vendedor": "Elizangela Pereira", "contato": "(81) 99245-4315", "pagamento": "À VISTA"}, {"nome": "LEO MADEIRAS", "area": "Materiais de marcenaria", "vendedor": "Rayane / Gleice", "contato": "(81) 9897-6353 / (81) 9939-1910", "pagamento": "À VISTA"}, {"nome": "VAREJÃO DA MADEIRA", "area": "Materiais de marcenaria", "vendedor": "Luiz", "contato": "(81) 99903-7734", "pagamento": "À VISTA"}, {"nome": "MADEPORT", "area": "Materiais de marcenaria", "vendedor": "Jorge", "contato": "(81) 98776-3322 / (81) 98848-1778", "pagamento": "À VISTA"}, {"nome": "JOSEMAR", "area": "Frete", "vendedor": "Josemar Bezerra", "contato": "(81) 99830-5526", "pagamento": "À VISTA"}, {"nome": "EDUARDO", "area": "Frete", "vendedor": "Eduardo Camara", "contato": "(81) 98653-7157", "pagamento": "À VISTA"}, {"nome": "IMPERIO MÓVEIS TELEVENDAS", "area": "Móveis e eletro", "vendedor": "Jadde", "contato": "(81) 98783-6495 / (81) 31984848", "pagamento": "À VISTA"}, {"nome": "MILLENA MOVEIS TELEVENDAS", "area": "Móveis e eletro", "vendedor": "Valmir", "contato": "(81) 98100-3688 / (81) 4042-3828", "pagamento": "BOLETO"}, {"nome": "LED NORDESTE", "area": "Iluminação", "vendedor": "Levi", "contato": "(85) 99850-8322", "pagamento": "BOLETO"}, {"nome": "GRUPO PJ ILUMINAÇÃO", "area": "Iluminação", "vendedor": "Marianne", "contato": "(81) 99840-9183", "pagamento": "À VISTA"}, {"nome": "NAGA SOLUÇÕES", "area": "Materiais de expediente", "vendedor": "Mariana", "contato": "(81) 99985-8206", "pagamento": "BOLETO"}, {"nome": "PEPAC EMBALAGENS", "area": "Materiais de expediente", "vendedor": "Wodson Neves", "contato": "(81) 98173-8290", "pagamento": "BOLETO"}, {"nome": "ALLTAPE FITAS", "area": "Materiais de expediente", "vendedor": "Dayse", "contato": "(81) 98113-5595", "pagamento": "À VISTA"}, {"nome": "SUZANO PAPEL TELEVENDAS", "area": "Materiais de expediente", "vendedor": "Roberta Assis", "contato": "(11) 4000-1222", "pagamento": "À VISTA"}, {"nome": "LOJA DO CONDOMINIO TELEVENDAS", "area": "Materiais MRO", "vendedor": "Tatiana", "contato": "(81) 99906-0055", "pagamento": "BOLETO"}, {"nome": "BACCHI ARTEFATOS DE FERRO", "area": "Marketing", "vendedor": "Ivanildo", "contato": "(81) 9989-1263", "pagamento": "À VISTA"}, {"nome": "ACIOMEC EMBALAGENS", "area": "Materiais de expediente", "vendedor": "Renata", "contato": "(81) 98427-3080", "pagamento": "BOLETO"}, {"nome": "SÃO BRAZ", "area": "Materiais de expediente", "vendedor": "Charles", "contato": "(81) 99163-5095", "pagamento": "BOLETO"}, {"nome": "EKKO COPOS E BRINDES", "area": "Materiais de expediente", "vendedor": "Guilherme", "contato": "(81) 99507-0092", "pagamento": "À VISTA"}, {"nome": "FLEX EMBALAGENS PLÁSTICAS", "area": "Materiais de expediente", "vendedor": "Fernanda", "contato": "(81) 99804-1900", "pagamento": "BOLETO"}, {"nome": "ETIQ PLAST TRAVA ANEL", "area": "Materiais de expediente", "vendedor": "Osmair Teodoro", "contato": "(19) 98921-4338", "pagamento": "À VISTA"}, {"nome": "ART LED ILUMINAÇÃO", "area": "Iluminação", "vendedor": "Adylene", "contato": "(81) 99508-1799", "pagamento": "À VISTA"}, {"nome": "MODE ON ILUMINAÇÃO", "area": "Iluminação", "vendedor": "José", "contato": "(81) 99610-6300", "pagamento": "À VISTA / BOLETO"}, {"nome": "DUFRIO REFRIGERAÇÃO", "area": "Materiais de refrigeração", "vendedor": "Ítalo", "contato": "(81) 99656-2584", "pagamento": "À VISTA"}, {"nome": "FRIGELAR", "area": "Materiais de refrigeração", "vendedor": "Edilene", "contato": "(81) 98838-8153", "pagamento": "À VISTA"}, {"nome": "FRIOPEÇAS", "area": "Materiais de refrigeração", "vendedor": "Karoline", "contato": "(81) 99680-0016", "pagamento": "BOLETO"}, {"nome": "CLIMA RIO", "area": "Materiais de refrigeração", "vendedor": "Thaysa", "contato": "(81) 99521-4699", "pagamento": "À VISTA"}, {"nome": "NORTE PEÇAS REFRIGERAÇÃO", "area": "Materiais de refrigeração", "vendedor": "Danilo", "contato": "(81) 99910-2560", "pagamento": "À VISTA"}, {"nome": "NORDAP REFRIGERAÇÃO", "area": "Materiais de refrigeração", "vendedor": "Marciana", "contato": "(81) 99196-1747", "pagamento": "À VISTA"}, {"nome": "GLOBAL MUSIC INSTRUMENTOS / INNOVEX DISTRIBUIDORA", "area": "Imobilizado", "vendedor": "Luiz", "contato": "(81) 99629-0567", "pagamento": "À VISTA"}, {"nome": "DIGITAL COMERCIO", "area": "Iluminação", "vendedor": "Rayssa", "contato": "(81) 98257-5570", "pagamento": "À VISTA"}, {"nome": "JUNGHEINRICH EQUIPAMENTOS", "area": "Imobilizado", "vendedor": "Venancio Melo", "contato": "(81) 98115-2174", "pagamento": "À VISTA"}, {"nome": "PRENORTE FABRICADOS", "area": "Materiais de construção e predial", "vendedor": "Fabyana Gonçalves", "contato": "(81) 3542-1485", "pagamento": "À VISTA"}, {"nome": "DO MESTRE ARGAMASSAS", "area": "Materiais de construção e predial", "vendedor": "Priscila Melo", "contato": "(81) 98133-2966", "pagamento": "BOLETO"}, {"nome": "PAMESA", "area": "Materiais de construção e predial", "vendedor": "Marcus Vinicius", "contato": "(81) 99545-1001", "pagamento": "BOLETO"}, {"nome": "ARMAZÉM CORAL", "area": "Materiais de construção e predial", "vendedor": "Suely Ramos", "contato": "(81) 98985-5960", "pagamento": "BOLETO"}, {"nome": "VENEZA CONSTRUÇÃO TELEVENDAS", "area": "Materiais de construção e predial", "vendedor": "Michele Lucia", "contato": "(81) 99872-2432", "pagamento": "BOLETO"}, {"nome": "ELDORADO TINTAS CASA & CONSTRUÇÃO", "area": "Materiais de construção e predial", "vendedor": "Douglas", "contato": "(81) 3428-3887", "pagamento": "BOLETO"}, {"nome": "CANAL DA CONSTRUÇÃO TELEVENDAS", "area": "Materiais de construção e predial", "vendedor": "Benedita Correia", "contato": "(81) 98256-3934", "pagamento": "BOLETO"}, {"nome": "FERREIRA COSTA TELEVENDAS", "area": "Materiais MRO", "vendedor": "Jordana", "contato": "(81) 99296-6653", "pagamento": "À VISTA"}, {"nome": "PRÉ-MOLDADOS BOM CONSELHO", "area": "Materiais de construção e predial", "vendedor": "Thais - Thamires", "contato": "(81) 98456-7835", "pagamento": "À VISTA"}, {"nome": "WALTER LOPES PRÉ-FABRICADOS", "area": "Materiais de construção e predial", "vendedor": "Mayara", "contato": "(81) 99628-0080", "pagamento": "À VISTA"}, {"nome": "PPP - PREMOLDADOS", "area": "Materiais de construção e predial", "vendedor": "Elisangela", "contato": "(81) 98637-1841", "pagamento": "À VISTA"}, {"nome": "CJC CONSTRUÇÕES", "area": "Materiais de construção e predial", "vendedor": "Vanessa Lins", "contato": "(81) 98970-0513", "pagamento": "À VISTA"}, {"nome": "N ISOPOR'S DISTRIBUIDORA", "area": "Materiais de construção e predial", "vendedor": "", "contato": "(81) 99646-4066", "pagamento": "À VISTA"}, {"nome": "DISPOR - DISTRIBUIDOR DE EPS", "area": "Materiais de construção e predial", "vendedor": "João Paulo", "contato": "(81) 99919-4355", "pagamento": "À VISTA"}, {"nome": "ARMAZÉM RIBEIRA RN", "area": "Materiais de marcenaria", "vendedor": "Jordão", "contato": "(84) 99441-0273", "pagamento": "À VISTA"}, {"nome": "GMAD JAMAD MADEIRAS", "area": "Materiais de marcenaria", "vendedor": "Josinete", "contato": "(84) 98161-2594", "pagamento": "À VISTA"}, {"nome": "COMJOL", "area": "Materiais de construção e predial", "vendedor": "Marleide", "contato": "(84) 98797-7044", "pagamento": "À VISTA"}, {"nome": "LAMPADINHA", "area": "Materiais elétricos", "vendedor": "Josué", "contato": "(84) 98808-7068", "pagamento": "À VISTA"}, {"nome": "IVANLUX MATERIAIS ELÉTRICOS", "area": "Materiais elétricos", "vendedor": "Josivan", "contato": "(84) 99928-0213", "pagamento": "À VISTA"}, {"nome": "LEVFORT CONSTRUÇÕES", "area": "Materiais de construção e predial", "vendedor": "Jessica", "contato": "(81) 99449-2494", "pagamento": "À VISTA"}, {"nome": "CONCREARTE CONCRETEIRA", "area": "Materiais de construção e predial", "vendedor": "Rubem Filho", "contato": "(81) 99117-5725", "pagamento": "À VISTA"}, {"nome": "LOJAS 2001 ABREU E LIMA", "area": "Materiais de construção e predial", "vendedor": "Dayana", "contato": "(81) 99392-9338", "pagamento": "BOLETO"}, {"nome": "TINTAS IQUINE", "area": "Materiais de pintura", "vendedor": "Newton Jr", "contato": "(81) 98956-6323", "pagamento": "À VISTA"}, {"nome": "DISBEC DISTRIBUIDORA", "area": "Materiais de pintura", "vendedor": "Rogério Nunes", "contato": "(81) 99103-3740", "pagamento": "BOLETO"}, {"nome": "LOJÃO DO PINTOR", "area": "Materiais de pintura", "vendedor": "Marcus André", "contato": "(81) 99416-7678", "pagamento": "À VISTA"}, {"nome": "DECOR COLORS RECIFE BOA VIAGEM", "area": "Materiais de pintura", "vendedor": "Gleicy", "contato": "(81) 97316-0299", "pagamento": "BOLETO"}, {"nome": "BRAVO EPIS DISTRIBUIDORA", "area": "Epi/Epc (segurança do trabalho)", "vendedor": "Joicy Souza", "contato": "(81) 99974-9610", "pagamento": "BOLETO"}, {"nome": "PERNAMBUCO DISTRIBUIDORA | GRUPO PE", "area": "Epi/Epc (segurança do trabalho)", "vendedor": "Amanda", "contato": "(81) 98575-3829", "pagamento": "BOLETO"}, {"nome": "CASA DO EPI", "area": "Epi/Epc (segurança do trabalho)", "vendedor": "Rose", "contato": "(81) 99299-6073", "pagamento": "À VISTA / BOLETO"}, {"nome": "ATACAREJO DO EPI", "area": "Epi/Epc (segurança do trabalho)", "vendedor": "Sandra Bezerra", "contato": "(81) 4141-8425", "pagamento": "À VISTA / BOLETO"}, {"nome": "EFACINI INFORMÁTICA", "area": "Materiais de TI e automação", "vendedor": "Vinícius Terra", "contato": "(47) 3350-6150", "pagamento": "À VISTA"}, {"nome": "PONTO TECNOLOGIA", "area": "Materiais de TI e automação", "vendedor": "Andressa Borges", "contato": "(41) 99809-0118", "pagamento": "À VISTA"}, {"nome": "MERCANTIL MEDICAMENTOS", "area": "Materiais de expediente", "vendedor": "Sandra Galdino", "contato": "(81) 99647-1306", "pagamento": "À VISTA"}, {"nome": "PARE FOGO EXTINTORES", "area": "Epi/Epc (segurança do trabalho)", "vendedor": "Flávio", "contato": "(87) 99600-7938", "pagamento": "BOLETO"}, {"nome": "KINITOS FESTAS CASA AMARELA", "area": "Materiais de expediente", "vendedor": "Rayane", "contato": "(81) 98114-5790", "pagamento": "À VISTA"}, {"nome": "COBREFLEX", "area": "Materiais elétricos", "vendedor": "Paula Dias", "contato": "(81) 98925-9375", "pagamento": "À VISTA"}, {"nome": "BRASFIO INDÚSTRIA", "area": "Materiais elétricos", "vendedor": "ERASTO", "contato": "(81) 99918-4519", "pagamento": "À VISTA"}, {"nome": "AM GERADORES", "area": "Materiais elétricos", "vendedor": "Walmyr", "contato": "(81) 99174-4381", "pagamento": "À VISTA"}, {"nome": "BR GRUPOS GERADORES", "area": "Materiais elétricos", "vendedor": "Luis Renato", "contato": "(81) 98415-2041", "pagamento": "À VISTA"}, {"nome": "CR GERADORES", "area": "Materiais elétricos", "vendedor": "CR", "contato": "(81) 99601-3377", "pagamento": "À VISTA"}, {"nome": "PERNAMBUCO ALUMINIO", "area": "Materiais de ferro e aço", "vendedor": "Magna", "contato": "(81) 98595-4915", "pagamento": "À VISTA"}, {"nome": "ARAUJO MADEIRAS", "area": "Materiais de marcenaria", "vendedor": "Silene", "contato": "(81) 98595-1211", "pagamento": "À VISTA"}, {"nome": "TC FORROS E DIVISÓRIAS", "area": "Materiais de drywall", "vendedor": "Taísa", "contato": "(81) 98596-9678", "pagamento": "BOLETO"}, {"nome": "ESPAÇO DRYWALL CARUARU", "area": "Materiais de drywall", "vendedor": "Manuela", "contato": "(81) 99600-5758", "pagamento": "À VISTA"}, {"nome": "IN DRY - DRYWALL", "area": "Materiais de drywall", "vendedor": "Jessica", "contato": "(81) 98952-9276", "pagamento": "BOLETO"}, {"nome": "DIVIMULTI DRYWALL", "area": "Materiais de drywall", "vendedor": "Mayara Medeiros", "contato": "(81) 99794-1750", "pagamento": "BOLETO"}, {"nome": "PERFECTTO FORROS E DIVISÓRIAS", "area": "Materiais de drywall", "vendedor": "Eduardo", "contato": "(81) 98805-6354", "pagamento": "À VISTA"}, {"nome": "DIVIAÇO DIVISÓRIAS FORROS", "area": "Materiais de drywall", "vendedor": "Socorro", "contato": "(84) 99616-5112", "pagamento": "À VISTA"}, {"nome": "PERFIL FORROS", "area": "Materiais de drywall", "vendedor": "Thiago", "contato": "(83) 99173-8715", "pagamento": "À VISTA"}, {"nome": "AÇO & CIA", "area": "Materiais de ferro e aço", "vendedor": "Juliete", "contato": "(84) 98726-6639", "pagamento": "À VISTA"}, {"nome": "MCC RESÍDUOS", "area": "Materiais de construção e predial", "vendedor": "Patricia", "contato": "(81) 4141-3382", "pagamento": "BOLETO"}, {"nome": "PAPA METRALHA", "area": "Materiais de construção e predial", "vendedor": "Ana Carolina", "contato": "(81) 99608-1540", "pagamento": "À VISTA / BOLETO"}, {"nome": "VALDENIO CAÇAMBAS CARUARU", "area": "Materiais de construção e predial", "vendedor": "Leninha", "contato": "(81) 99983-7190", "pagamento": "À VISTA"}, {"nome": "MESTRE DA OBRA | LOCAÇÃO DE EQUIPAMENTOS - CARUARU", "area": "Materiais de construção e predial", "vendedor": "Laurinda", "contato": "(81) 98887-0290", "pagamento": "À VISTA"}, {"nome": "ARMAZÉM COLORADO CARUARU", "area": "Materiais de construção e predial", "vendedor": "Renan", "contato": "(81) 99249-5526", "pagamento": "À VISTA"}, {"nome": "COMERCIAL BATISTA CARUARU", "area": "Materiais de construção e predial", "vendedor": "Wollace", "contato": "(81) 99986-8263", "pagamento": "À VISTA"}, {"nome": "ARMAZÉM MACOL CARUARU", "area": "Materiais de construção e predial", "vendedor": "Vendas", "contato": "(81) 99666-1070", "pagamento": "À VISTA"}, {"nome": "COMERCIAL JUNIOR CARUARU", "area": "Materiais de construção e predial", "vendedor": "Vendas", "contato": "(81) 99909-0119", "pagamento": "À VISTA"}, {"nome": "LOJA DO MECÂNICO TELEVENDAS", "area": "Materiais MRO", "vendedor": "Bruno Caramori", "contato": "(16) 98224-1677", "pagamento": "À VISTA / BOLETO"}, {"nome": "PERFIL TUBOS CARUARU", "area": "Materiais de ferro e aço", "vendedor": "Maria Eduarda", "contato": "(81) 97337-3813", "pagamento": "À VISTA"}, {"nome": "Top Mix Metais E Esquadrias", "area": "Materiais de ferro e aço", "vendedor": "Gilmara", "contato": "(81) 98819-1484", "pagamento": "À VISTA"}, {"nome": "PALMA PARAFUSOS", "area": "Materiais MRO", "vendedor": "Gilson", "contato": "(81) 98935-9512", "pagamento": "À VISTA"}];
+var sb=null;
+var _aprovTodos=[];
+var _cAcao='',_cSolId='',_cDesc='';
+
+// INIT
+var LOCAL_DATA = {solicitacoes:[], cotacoes:[], decisoes:[]};
+var MODO_LOCAL = false;
+
+(function(){
+  var isFile = window.location.protocol === 'file:';
+  try{
+    sb = supabase.createClient(SB_URL, SB_KEY);
+    sb.from('solicitacoes').select('id',{count:'exact',head:true}).then(function(r){
+      var dot = document.getElementById('conn-dot');
+      var lbl = document.getElementById('conn-lbl');
+      if(r.error || isFile){
+        MODO_LOCAL = true;
+        dot.className = 'conn-dot';
+        if(lbl) lbl.textContent = isFile ? 'Abrir via servidor' : 'Offline';
+        if(isFile) mostrarAvisoServidor();
+      } else {
+        dot.className = 'conn-dot ok';
+        if(lbl) lbl.textContent = 'Conectado';
+      }
+    }).catch(function(){
+      MODO_LOCAL = true;
+      mostrarAvisoServidor();
+    });
+  }catch(e){
+    MODO_LOCAL = true;
+    mostrarAvisoServidor();
+    console.error('SB:',e);
+  }
+  setPeriodo(30);
+})();
+
+function mostrarAvisoServidor(){
+  var av = document.getElementById('aviso-servidor');
+  if(av) av.style.display = 'flex';
+}
+
+// UTILS
+function fBR(n){return 'R$ '+Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fBRk(n){n=Number(n||0);return n>=1000?'R$ '+(n/1000).toFixed(1).replace('.',',')+' k':fBR(n);}
+function pBR(s){return parseFloat((s||'').replace(/\./g,'').replace(',','.'))||0;}
+function gId(){return 'SOL-'+Date.now().toString().slice(-6)+'-'+Math.random().toString(36).slice(2,4).toUpperCase();}
+function agora(){var d=new Date();return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
+function fData(iso){if(!iso)return '';try{return new Date(iso).toLocaleDateString('pt-BR');}catch(e){return '';}}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ABAS
+function irAba(id,el){
+  ['dash','pend','aprov','nova','admin'].forEach(function(a){
+    var d=document.getElementById('aba-'+a);
+    if(d) d.style.display=a===id?'block':'none';
+  });
+  document.querySelectorAll('.na').forEach(function(a){a.classList.remove('on');});
+  if(el) el.classList.add('on');
+  if(id==='dash') carregarDash();
+  if(id==='pend') carregarPend();
+  if(id==='aprov') carregarAprov();
+}
+
+// PERÍODO
+function setPeriodo(dias){
+  var fim=new Date(),ini=new Date();
+  if(dias>0) ini.setDate(fim.getDate()-dias); else ini=new Date('2020-01-01');
+  document.getElementById('dt-ini').value=ini.toISOString().slice(0,10);
+  document.getElementById('dt-fim').value=fim.toISOString().slice(0,10);
+  ['fb-30','fb-60','fb-90','fb-all'].forEach(function(x){document.getElementById(x).classList.remove('on');});
+  var mp={30:'fb-30',60:'fb-60',90:'fb-90',0:'fb-all'};
+  if(mp[dias]) document.getElementById(mp[dias]).classList.add('on');
+  carregarDash();
+}
+
+// DASHBOARD
+async function carregarDash(){
+  if(!sb || MODO_LOCAL){
+    // Modo demo com dados locais
+    document.getElementById('d-eco').textContent = fBR(LOCAL_DATA.eco||0);
+    document.getElementById('d-eco-sub').textContent = (LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='aprovado'||s.status==='auto-aprovado';}).length)+' aprovadas';
+    document.getElementById('d-taxa').textContent = '—%';
+    document.getElementById('d-aprov').textContent = LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='aprovado'||s.status==='auto-aprovado';}).length;
+    document.getElementById('d-aprov-v').textContent = '—';
+    document.getElementById('d-pend').textContent = LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='pendente';}).length;
+    document.getElementById('d-pend-v').textContent = '—';
+    document.getElementById('d-auto').textContent = LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='auto-aprovado';}).length;
+    document.getElementById('d-ticket').textContent = '—';
+    document.getElementById('d-mes').textContent = '—';
+    document.getElementById('d-rej').textContent = LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='rejeitado';}).length;
+    document.getElementById('d-rev').textContent = '—';
+    document.getElementById('cnt-p').textContent = LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='pendente';}).length;
+    document.getElementById('bar-areas').innerHTML = '<div class="empty-msg">Conecte via servidor para ver dados reais.</div>';
+    document.getElementById('bar-forns').innerHTML = '<div class="empty-msg">Conecte via servidor para ver dados reais.</div>';
+    return;
+  }
+  var ini=document.getElementById('dt-ini').value;
+  var fim=document.getElementById('dt-fim').value;
+  var q=sb.from('solicitacoes').select('*');
+  if(ini) q=q.gte('criado_em',ini+'T00:00:00');
+  if(fim) q=q.lte('criado_em',fim+'T23:59:59');
+  var r=await q;
+  var data=r.data||[];
+  var aprov=data.filter(function(d){return d.status==='aprovado'||d.status==='auto-aprovado';});
+  var pend=data.filter(function(d){return d.status==='pendente';});
+  var rej=data.filter(function(d){return d.status==='rejeitado';});
+  var rev=data.filter(function(d){return d.status==='revisao';});
+  var auto=data.filter(function(d){return d.status==='auto-aprovado';});
+  var eco=aprov.reduce(function(a,d){return a+(Number(d.economia)||0);},0);
+  var aprovV=aprov.reduce(function(a,d){return a+(Number(d.menor_valor)||0);},0);
+  var pendV=pend.reduce(function(a,d){return a+(Number(d.menor_valor)||0);},0);
+  var ticket=aprov.length?aprovV/aprov.length:0;
+  var taxa=data.length?Math.round(aprov.length/data.length*100):0;
+  var now=new Date();
+  var mes=data.filter(function(d){var dt=new Date(d.criado_em);return dt.getMonth()===now.getMonth()&&dt.getFullYear()===now.getFullYear();}).length;
+  document.getElementById('d-eco').textContent=fBR(eco);
+  document.getElementById('d-eco-sub').textContent=aprov.length+' compras aprovadas no período';
+  document.getElementById('d-taxa').textContent=taxa+'%';
+  document.getElementById('d-aprov').textContent=aprov.length;
+  document.getElementById('d-aprov-v').textContent=fBRk(aprovV)+' aprovado';
+  document.getElementById('d-pend').textContent=pend.length;
+  document.getElementById('d-pend-v').textContent=fBRk(pendV)+' em espera';
+  document.getElementById('d-auto').textContent=auto.length;
+  document.getElementById('d-ticket').textContent=fBRk(ticket);
+  document.getElementById('d-mes').textContent=mes;
+  document.getElementById('d-rej').textContent=rej.length;
+  document.getElementById('d-rev').textContent=rev.length;
+  document.getElementById('cnt-p').textContent=pend.length;
+  var ini2=ini?ini.slice(5).split('-').reverse().join('/'):'';
+  var fim2=fim?fim.slice(5).split('-').reverse().join('/'):'';
+  document.getElementById('d-per').textContent=ini2+'–'+fim2;
+  var areas={},forns={};
+  aprov.forEach(function(d){
+    var a=d.area||'Outros'; areas[a]=(areas[a]||0)+(Number(d.economia)||0);
+    var f=d.menor_fornecedor||'Outros'; forns[f]=(forns[f]||0)+(Number(d.menor_valor)||0);
+  });
+  rBarras('bar-areas',areas,'#16A34A');
+  rBarras('bar-forns',forns,'#2563EB');
+}
+
+function rBarras(id,obj,cor){
+  var cont=document.getElementById(id);
+  var entries=Object.entries(obj).sort(function(a,b){return b[1]-a[1];}).slice(0,6);
+  if(!entries.length){cont.innerHTML='<div class="empty-msg">Sem dados no período.</div>';return;}
+  var max=entries[0][1];
+  var html='';
+  entries.forEach(function(e){
+    var pct=max>0?Math.round(e[1]/max*100):0;
+    var lbl=e[0].length>20?e[0].slice(0,19)+'…':e[0];
+    html+='<div class="bar-row"><span class="bar-lbl" title="'+esc(e[0])+'">'+esc(lbl)+'</span>'
+      +'<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+cor+'"></div></div>'
+      +'<span class="bar-val" style="color:'+cor+'">'+fBRk(e[1])+'</span></div>';
+  });
+  cont.innerHTML=html;
+}
+
+// PENDENTES
+async function carregarPend(){
+  if(!sb || MODO_LOCAL){
+    var pend = LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='pendente';});
+    document.getElementById('kp-n').textContent = pend.length;
+    document.getElementById('kp-eco').textContent = '—';
+    document.getElementById('kp-val').textContent = '—';
+    document.getElementById('cnt-p').textContent = pend.length;
+    var dados = pend.map(function(s){
+      return Object.assign({},s,{cotacoes: LOCAL_DATA.cotacoes.filter(function(c){return c.solicitacao_id===s.id;})});
+    });
+    rLista('lista-pend', dados, 'pend');
+    return;
+  }
+  var r=await sb.from('solicitacoes').select('*,cotacoes(*)').eq('status','pendente').order('criado_em',{ascending:false});
+  var data=r.data||[];
+  document.getElementById('kp-n').textContent=data.length;
+  document.getElementById('kp-eco').textContent=data.length?fBRk(data.reduce(function(a,d){return a+(Number(d.economia)||0);},0)):'—';
+  document.getElementById('kp-val').textContent=data.length?fBRk(data.reduce(function(a,d){return a+(Number(d.menor_valor)||0);},0)):'—';
+  document.getElementById('cnt-p').textContent=data.length;
+  rLista('lista-pend',data,'pend');
+}
+
+// APROVADOS
+async function carregarAprov(){
+  if(!sb || MODO_LOCAL){
+    var aprov = LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='aprovado'||s.status==='auto-aprovado';});
+    _aprovTodos = aprov.map(function(s){
+      return Object.assign({},s,{cotacoes: LOCAL_DATA.cotacoes.filter(function(c){return c.solicitacao_id===s.id;})});
+    });
+    renderAprovados();
+    return;
+  }
+  var r=await sb.from('solicitacoes').select('*,cotacoes(*)').in('status',['aprovado','auto-aprovado']).order('decidido_em',{ascending:false});
+  _aprovTodos=r.data||[];
+  renderAprovados();
+}
+function renderAprovados(){
+  var b=(document.getElementById('aprov-busca').value||'').toLowerCase();
+  var fd=_aprovTodos.filter(function(d){
+    return !b||(d.descricao||'').toLowerCase().includes(b)||(d.area||'').toLowerCase().includes(b)||(d.menor_fornecedor||'').toLowerCase().includes(b);
+  });
+  rLista('lista-aprov',fd,'aprov');
+}
+
+// RENDER LISTA
+function rLista(contId,data,tipo){
+  var cont=document.getElementById(contId);
+  if(!data.length){cont.innerHTML='<div class="empty-msg">'+(tipo==='pend'?'Nenhuma pendência.':'Nenhum registro.')+'</div>';return;}
+  var html='';
+  data.forEach(function(s){
+    var mn=Number(s.menor_valor)||0,mx=Number(s.maior_valor)||0,eco=Number(s.economia)||0;
+    var ecoPct=mx>0?(eco/mx*100).toFixed(1):'0';
+    var cots=s.cotacoes||[];
+    var bcls=tipo==='pend'?'bp':(s.status==='auto-aprovado'?'bauto':'ba');
+    var pillHtml=tipo==='pend'?'<span class="pill pp">⏳ Pendente</span>':
+      (s.status==='auto-aprovado'?'<span class="pill pau">⚡ Auto</span>':'<span class="pill pa">✅ Aprovado</span>');
+    html+='<div class="sc '+bcls+'" onclick="tgDet('det-'+s.id+'')">'
+      +'<div class="sc-hd"><div><div class="sc-id">'+esc(s.id)+' · '+fData(s.criado_em)+'</div>'
+      +'<div class="sc-desc">'+esc(s.descricao||'')+'</div>'
+      +'<div class="sc-meta"><span>🏢 '+esc(s.area||'—')+'</span>'
+      +(s.destino?'<span>📍 '+esc(s.destino)+'</span>':'')
+      +'<span>👤 '+esc(s.solicitante||'')+'</span></div></div>'
+      +'<div><div class="sc-val">'+fBRk(mn)+'</div>'
+      +(eco>0?'<div class="sc-eco">Econ. '+fBRk(eco)+'</div>':'')
+      +'<div style="margin-top:4px">'+pillHtml+'</div></div></div>'
+      +'<div class="sc-ft"><div>Menor: <strong>'+esc(s.menor_fornecedor||'—')+' — '+fBR(mn)+'</strong></div>'
+      +'<div style="color:var(--tx3)">'+cots.length+' cot. ▾</div></div></div>';
+    // DETALHE
+    var cotRows='';
+    cots.forEach(function(c){
+      var isMin=Number(c.valor)===mn,isMax=Number(c.valor)===mx&&cots.length>1;
+      var pdfHtml=c.pdf_url?'<a class="pdf-cot" href="'+esc(c.pdf_url)+'" target="_blank" onclick="event.stopPropagation()">📄 PDF</a>':'<span style="color:var(--tx3);font-size:9px">—</span>';
+      cotRows+='<tr class="'+(isMin?'ct-mn':'')+'"><td>'+(isMin?'<span class="bmn">✓</span> ':'')+esc(c.fornecedor||'')+'</td>'
+        +'<td><strong>'+fBR(c.valor)+'</strong></td><td>'+(c.prazo||'—')+'</td>'
+        +'<td>'+(isMax?'<span class="bmx">Maior</span>':'')+'</td><td>'+pdfHtml+'</td></tr>';
+    });
+    var pdfs=cots.filter(function(c){return c.pdf_url;});
+    var pdfPack=pdfs.length?'<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:var(--rs);padding:8px 12px;margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
+      +'<span style="font-size:12px;font-weight:600;color:#1D4ED8">📦 '+pdfs.length+' PDF(s) anexado(s)</span>'
+      +'<button style="background:#2563EB;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();abrPDFs('+JSON.stringify(pdfs.map(function(c){return c.pdf_url;}))+')">Ver todos</button></div>':'';
+    var btns='';
+    if(tipo==='pend'){
+      btns='<textarea class="fi" id="obs-'+s.id+'" style="margin-top:9px;min-height:48px" placeholder="Observação (opcional)..." onclick="event.stopPropagation()"></textarea>'
+        +'<div class="d3">'
+        +'<button class="bap" onclick="event.stopPropagation();abrConf('aprovar',''+s.id+'','+JSON.stringify(s.descricao||'')+',''+fBR(mn)+'','+JSON.stringify(s.menor_fornecedor||'')+')">✅ Aprovar</button>'
+        +'<button class="brv" onclick="event.stopPropagation();abrConf('revisar',''+s.id+'','+JSON.stringify(s.descricao||'')+',''+fBR(mn)+'','')">🔄 Revisar</button>'
+        +'<button class="bre" onclick="event.stopPropagation();abrConf('rejeitar',''+s.id+'','+JSON.stringify(s.descricao||'')+',''+fBR(mn)+'','')">❌ Rejeitar</button>'
+        +'</div>';
+    }else{
+      btns='<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
+        +'<button class="bprint" onclick="event.stopPropagation();window.print()">🖨️ Imprimir</button>'
+        +'<button class="brv" style="padding:8px 14px;font-size:11px" onclick="event.stopPropagation();reenvWA(''+s.id+'')">🔄 Reenviar WhatsApp</button>'
+        +'</div>';
+    }
+    html+='<div class="det" id="det-'+s.id+'">'
+      +'<div class="card"><div class="card-hd"><span class="cht">Detalhes</span>'+pillHtml+'</div>'
+      +'<div style="padding:.85rem 1.1rem">'
+      +(s.area?'<div class="ir"><span class="il">Área</span><span class="iv">'+esc(s.area)+'</span></div>':'')
+      +(s.categoria?'<div class="ir"><span class="il">Categoria</span><span class="iv">'+esc(s.categoria)+'</span></div>':'')
+      +(s.destino?'<div class="ir"><span class="il">Destino</span><span class="iv">'+esc(s.destino)+'</span></div>':'')
+      +(s.justificativa?'<div class="ir"><span class="il">Justificativa</span><span class="iv">'+esc(s.justificativa)+'</span></div>':'')
+      +(s.decidido_em?'<div class="ir"><span class="il">Decidido em</span><span class="iv">'+fData(s.decidido_em)+'</span></div>':'')
+      +(s.observacao?'<div class="ir"><span class="il">Obs.</span><span class="iv">'+esc(s.observacao)+'</span></div>':'')
+      +'<table class="ct"><thead><tr><th>Fornecedor</th><th>Valor</th><th>Prazo</th><th></th><th>PDF</th></tr></thead><tbody>'+cotRows+'</tbody></table>'
+      +(eco>0?'<div class="eco-b"><div class="eco-r"><span style="color:var(--vd)">Menor</span><span style="font-weight:700;color:var(--vd)">'+fBR(mn)+'</span></div>'
+        +'<div class="eco-r"><span>Maior</span><span>'+fBR(mx)+'</span></div>'
+        +'<div class="eco-r t"><span>Economia</span><span>'+fBR(eco)+' ('+ecoPct+'%)</span></div></div>':'')
+      +pdfPack+btns
+      +'</div></div></div>';
+  });
+  cont.innerHTML=html;
+}
+
+function tgDet(id){
+  var d=document.getElementById(id);if(!d)return;
+  var on=d.classList.contains('on');
+  document.querySelectorAll('.det').forEach(function(x){x.classList.remove('on');});
+  if(!on){d.classList.add('on');setTimeout(function(){d.scrollIntoView({behavior:'smooth',block:'nearest'});},80);}
+}
+
+function abrPDFs(urls){urls.forEach(function(u,i){setTimeout(function(){window.open(u,'_blank');},i*400);});}
+
+// FORNECEDOR INFO
+function onFC(i){
+  var nome=document.getElementById('fn'+i).value;
+  var f=FORN.find(function(x){return x.nome===nome;});
+  var el=document.getElementById('fi'+i);
+  if(f&&el){
+    var t=[];
+    if(f.vendedor) t.push('👤 '+f.vendedor);
+    if(f.contato) t.push('📞 '+f.contato);
+    if(f.pagamento) t.push('💳 '+f.pagamento);
+    el.innerHTML=t.join(' · ');
+  }else if(el) el.innerHTML='';
+}
+
+// CALC COTAÇÕES
+function rc(){
+  var vs=[pBR(document.getElementById('vl0').value),pBR(document.getElementById('vl1').value),pBR(document.getElementById('vl2').value)].filter(function(v){return v>0;});
+  [0,1,2].forEach(function(i){document.getElementById('cc'+i).classList.remove('mn');});
+  if(!vs.length){document.getElementById('ef').style.display='none';return;}
+  var mn=Math.min.apply(null,vs),mx=Math.max.apply(null,vs),eco=mx-mn;
+  [0,1,2].forEach(function(i){if(pBR(document.getElementById('vl'+i).value)===mn) document.getElementById('cc'+i).classList.add('mn');});
+  document.getElementById('ef-mn').textContent=fBR(mn);
+  document.getElementById('ef-mx').textContent=fBR(mx);
+  document.getElementById('ef-eco').textContent=fBR(eco)+' ('+(eco/mx*100).toFixed(1)+'%)';
+  document.getElementById('ef').style.display='block';
+  document.getElementById('eco-badge').style.display='';
+  document.getElementById('al5k').style.display=mn>LIMITE?'flex':'none';
+}
+
+function mkP(i){
+  var inp=document.getElementById('pf'+i),lbl=document.getElementById('pu'+i);
+  if(inp.files&&inp.files[0]){lbl.classList.add('ok');lbl.childNodes[0].textContent='✅ '+inp.files[0].name.slice(0,14);}
+}
+
+// ENVIAR
+async function enviar(){
+  // Modo local: salva na memória
+  var desc=(document.getElementById('n-desc').value||'').trim();
+  var area=document.getElementById('n-area').value;
+  if(!desc||!area){alert('Preencha Área e Descrição.');return;}
+  var sol=(document.getElementById('n-sol').value||'Comprador').trim();
+  var cots=[];
+  for(var i=0;i<3;i++){
+    var fn=(document.getElementById('fn'+i).value||'').trim();
+    var vl=pBR(document.getElementById('vl'+i).value);
+    if(fn&&vl>0) cots.push({fornecedor:fn,valor:vl,prazo:(document.getElementById('pr'+i).value||'').trim(),pdf_url:null,_f:document.getElementById('pf'+i).files[0]||null});
+  }
+  if(cots.length<2){alert('Informe pelo menos 2 cotações.');return;}
+  var mn=Math.min.apply(null,cots.map(function(c){return c.valor;}));
+  var mx=Math.max.apply(null,cots.map(function(c){return c.valor;}));
+  var mc=cots.find(function(c){return c.valor===mn;});
+  var status=mn>LIMITE?'pendente':'auto-aprovado';
+  var id=gId();
+  var btn=document.getElementById('btn-env');
+  btn.innerHTML='<div class="spin"></div> Salvando...';btn.disabled=true;
+  try{
+    if(MODO_LOCAL){
+      var s2 = {id:id,descricao:desc,area:area,
+        categoria:document.getElementById('n-cat').value,
+        destino:document.getElementById('n-dest').value,
+        justificativa:document.getElementById('n-just').value,
+        solicitante:sol,status:status,menor_valor:mn,maior_valor:mx,
+        economia:mx-mn,menor_fornecedor:mc.fornecedor,
+        criado_em:new Date().toISOString()};
+      LOCAL_DATA.solicitacoes.push(s2);
+      cots.forEach(function(c){
+        LOCAL_DATA.cotacoes.push({solicitacao_id:id,fornecedor:c.fornecedor,valor:c.valor,prazo:c.prazo,pdf_url:null});
+      });
+      if(status==='auto-aprovado'){
+        LOCAL_DATA.eco = (LOCAL_DATA.eco||0)+(mx-mn);
+        suc('⚡','Aprovação automática (local)',desc+'\n'+fBR(mn)+' · '+mc.fornecedor+'\nSalvo localmente (sem servidor).');
+      } else {
+        suc('📤','Enviado (local)!',id+'\n'+desc+'\n'+fBR(mn)+'\nSalvo localmente — conecte via servidor para persistir no banco.');
+      }
+      limpar();
+      btn.innerHTML='Enviar solicitação →';btn.disabled=false;
+      return;
+    }
+    var r=await sb.from('solicitacoes').insert({id:id,descricao:desc,area:area,
+      categoria:document.getElementById('n-cat').value,destino:document.getElementById('n-dest').value,
+      justificativa:document.getElementById('n-just').value,solicitante:sol,status:status,
+      menor_valor:mn,maior_valor:mx,economia:mx-mn,menor_fornecedor:mc.fornecedor});
+    if(r.error) throw new Error(r.error.message);
+    for(var j=0;j<cots.length;j++){
+      if(cots[j]._f){
+        var up=await sb.storage.from('cotacoes-pdfs').upload(id+'/'+j+'_'+cots[j]._f.name,cots[j]._f,{upsert:true});
+        if(!up.error) cots[j].pdf_url=sb.storage.from('cotacoes-pdfs').getPublicUrl(id+'/'+j+'_'+cots[j]._f.name).data.publicUrl;
+      }
+    }
+    await sb.from('cotacoes').insert(cots.map(function(c){return {solicitacao_id:id,fornecedor:c.fornecedor,valor:c.valor,prazo:c.prazo,pdf_url:c.pdf_url};}));
+    if(status==='auto-aprovado'){
+      await sb.from('decisoes').insert({solicitacao_id:id,acao:'auto-aprovado',observacao:'≤ R$ 5.000'});
+      suc('⚡','Aprovação automática',desc+'
+'+fBR(mn)+' · '+mc.fornecedor+'
+Liberada automaticamente.');
+    }else{
+      await reenvWA(id);
+      suc('📤','Enviado!',id+'
+'+desc+'
+'+fBR(mn)+'
+Presidência notificada via WhatsApp.');
+    }
+    limpar();
+    document.getElementById('cnt-p').textContent=Number(document.getElementById('cnt-p').textContent||0)+(status==='pendente'?1:0);
+  }catch(e){alert('Erro ao salvar: '+e.message);}
+  btn.innerHTML='Enviar solicitação →';btn.disabled=false;
+}
+
+function limpar(){
+  ['n-sol','n-area','n-cat','n-dest','n-desc','n-just'].forEach(function(x){var e=document.getElementById(x);if(e)e.value='';});
+  for(var i=0;i<3;i++){
+    ['fn','vl','pr'].forEach(function(p){var e=document.getElementById(p+i);if(e)e.value='';});
+    document.getElementById('cc'+i).classList.remove('mn');
+    document.getElementById('fi'+i).innerHTML='';
+    var pu=document.getElementById('pu'+i);pu.className='pdf-u';pu.childNodes[0].textContent='📎 PDF';
+  }
+  document.getElementById('ef').style.display='none';
+  document.getElementById('al5k').style.display='none';
+  document.getElementById('eco-badge').style.display='none';
+}
+
+// EXCEL
+function lerXLS(inp){
+  if(!inp.files||!inp.files[0])return;
+  var rd=new FileReader();
+  rd.onload=async function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:'array'});
+      var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+      var ok=0;
+      for(var i=0;i<rows.length;i++){
+        var row=rows[i];
+        var desc=(row['DESCRIÇÃO']||row['DESCRICAO']||row['Descrição']||'').toString().trim();
+        var area=(row['ÁREA DE GESTÃO']||row['AREA']||row['Área']||'').toString().trim();
+        var forn=(row['FORNECEDOR']||'').toString().trim();
+        var vlA=parseFloat((row['ORÇ. COM DESCONTO']||row['VALOR_A']||row['VALOR A']||0).toString().replace(',','.'))||0;
+        var vlB=parseFloat((row['ORÇ. ANTERIOR']||row['VALOR_B']||0).toString().replace(',','.'))||0;
+        if(!desc||!forn||vlA<=0)continue;
+        var cots2=[{fornecedor:forn,valor:vlA,prazo:'',pdf_url:null}];
+        if(vlB>0&&vlB!==vlA) cots2.push({fornecedor:forn+' (ant.)',valor:vlB,prazo:'',pdf_url:null});
+        else cots2.push({fornecedor:'Referência',valor:vlA*1.08,prazo:'',pdf_url:null});
+        var mn2=Math.min.apply(null,cots2.map(function(c){return c.valor;}));
+        var mx2=Math.max.apply(null,cots2.map(function(c){return c.valor;}));
+        var mc2=cots2.find(function(c){return c.valor===mn2;});
+        var id2=gId();
+        var st=mn2>LIMITE?'pendente':'auto-aprovado';
+        await sb.from('solicitacoes').insert({id:id2,descricao:desc,area:area,
+          categoria:(row['CATEGORIA']||'').toString(),destino:(row['DESTINO']||'').toString(),
+          solicitante:'Excel',status:st,menor_valor:mn2,maior_valor:mx2,economia:mx2-mn2,menor_fornecedor:mc2.fornecedor});
+        await sb.from('cotacoes').insert(cots2.map(function(c){return Object.assign({},c,{solicitacao_id:id2});}));
+        if(st==='auto-aprovado') await sb.from('decisoes').insert({solicitacao_id:id2,acao:'auto-aprovado'});
+        ok++;
+      }
+      document.getElementById('xls-ok').style.display='flex';
+      document.getElementById('xls-msg').textContent=ok+' registros importados.';
+      suc('📊','Excel importado!',ok+' solicitações adicionadas.');
+    }catch(err){alert('Erro: '+err.message);}
+  };
+  rd.readAsArrayBuffer(inp.files[0]);
+}
+
+// DECISÃO
+function abrConf(acao,id,desc,val,forn){
+  _cAcao=acao;_cSolId=id;_cDesc=desc;
+  var t={aprovar:'Confirmar aprovação?',rejeitar:'Confirmar rejeição?',revisar:'Solicitar revisão?'};
+  var d={
+    aprovar:id+'
+'+desc+'
+
+Fornecedor: '+(forn||'—')+' — '+val,
+    rejeitar:id+'
+'+desc+'
+
+Comprador será notificado.',
+    revisar:id+'
+'+desc+'
+
+Novas cotações serão solicitadas.'
+  };
+  var cor={aprovar:'var(--vd)',rejeitar:'var(--vm)',revisar:'var(--az3)'};
+  document.getElementById('conf-t').textContent=t[acao];
+  document.getElementById('conf-d').textContent=d[acao];
+  document.getElementById('conf-ok').style.background=cor[acao];
+  document.getElementById('conf-ov').classList.add('on');
+}
+function fConf(e){if(e&&e.target!==document.getElementById('conf-ov'))return;document.getElementById('conf-ov').classList.remove('on');}
+async function confAcao(){
+  document.getElementById('conf-ov').classList.remove('on');
+  var obs=(document.getElementById('obs-'+_cSolId)||{}).value||'';
+  var ns={aprovar:'aprovado',rejeitar:'rejeitado',revisar:'revisao'}[_cAcao];
+  if(MODO_LOCAL){
+    var sol2 = LOCAL_DATA.solicitacoes.find(function(s){return s.id===_cSolId;});
+    if(sol2){sol2.status=ns;sol2.observacao=obs;sol2.decidido_em=new Date().toISOString();}
+    if(ns==='aprovado') LOCAL_DATA.eco=(LOCAL_DATA.eco||0)+(sol2?Number(sol2.economia)||0:0);
+  } else {
+    await sb.from('solicitacoes').update({status:ns,observacao:obs,decidido_em:new Date().toISOString()}).eq('id',_cSolId);
+    await sb.from('decisoes').insert({solicitacao_id:_cSolId,acao:ns,observacao:obs});
+  }
+  var icos={aprovar:'✅',rejeitar:'❌',revisar:'🔄'};
+  suc(icos[_cAcao],{aprovar:'Aprovado!',rejeitar:'Rejeitado',revisar:'Revisão solicitada'}[_cAcao],_cDesc+'
+
+Registrado em '+agora()+'.');
+  await carregarPend();await carregarDash();
+}
+
+// WA
+async function reenvWA(solId){
+  if(!sb)return;
+  var r=await sb.from('solicitacoes').select('*,cotacoes(*)').eq('id',solId).single();
+  var s=r.data;if(!s)return;
+  var mn=Number(s.menor_valor)||0;
+  var txt='';
+  (s.cotacoes||[]).forEach(function(c){txt+=(Number(c.valor)===mn?'✅ ':'• ')+c.fornecedor+': '+fBR(c.valor)+(Number(c.valor)===mn?' ← menor':'')+'
+';});
+  var link='compras.esposende.com.br/aprovar?id='+solId+'&tk='+Math.random().toString(36).slice(2,7);
+  var msg='🛒 *APROVAÇÃO DE COMPRA — ESPOSENDE*
+
+Solicitação: *#'+solId+'*
+Item: '+s.descricao+'
+Solicitante: '+s.solicitante+' ('+s.area+')
+
+📊 *Cotações:*
+'+txt+'
+💰 Economia: *'+fBR(Number(s.economia)||0)+'*
+
+👇 Aprovar:
+https://'+link;
+  var tel=((document.getElementById('cfg-wa')||{}).value||WA_TEL).replace(/\D/g,'');
+  window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+// SUC
+function suc(ico,t,d){document.getElementById('suc-i').textContent=ico;document.getElementById('suc-t').textContent=t;document.getElementById('suc-d').textContent=d;document.getElementById('suc-ov').classList.add('on');}
+function fSuc(){document.getElementById('suc-ov').classList.remove('on');}
+
+// DRAG DROP
+var dz=document.getElementById('dz');
+if(dz){
+  dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('ov');});
+  dz.addEventListener('dragleave',function(){dz.classList.remove('ov');});
+  dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('ov');var f=e.dataTransfer.files[0];if(f){var i=document.getElementById('inp-xls');var dt=new DataTransfer();dt.items.add(f);i.files=dt.files;lerXLS(i);}});
+}
+</script>
+</body>
+</html>
