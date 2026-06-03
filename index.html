@@ -1454,8 +1454,14 @@ async function reenvWA(solId){
   var s=r.data;if(!s)return;
   var mn=Number(s.menor_valor)||0;
   var txt='';
-  (s.cotacoes||[]).forEach(function(c){txt+=(Number(c.valor)===mn?'✅ ':'• ')+c.fornecedor+': '+fBR(c.valor)+(Number(c.valor)===mn?' ← menor':'')+'
-';});
+  (s.cotacoes||[]).forEach(function(c){
+  txt += (Number(c.valor)===mn ? '✅ ' : '• ')
+       + c.fornecedor
+       + ': '
+       + fBR(c.valor)
+       + (Number(c.valor)===mn ? ' ← menor' : '')
+       + '\n';
+});
   var link='compras.esposende.com.br/aprovar?id='+solId+'&tk='+Math.random().toString(36).slice(2,7);
   var msg =
 '🛒 *APROVAÇÃO DE COMPRA — ESPOSENDE*\n\n' +
