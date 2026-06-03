@@ -1443,9 +1443,7 @@ async function confAcao(){
     await sb.from('decisoes').insert({solicitacao_id:_cSolId,acao:ns,observacao:obs});
   }
   var icos={aprovar:'✅',rejeitar:'❌',revisar:'🔄'};
-  suc(icos[_cAcao],{aprovar:'Aprovado!',rejeitar:'Rejeitado',revisar:'Revisão solicitada'}[_cAcao],_cDesc+'
-
-Registrado em '+agora()+'.');
+  suc(icos[_cAcao],{aprovar:'Aprovado',rejeitar:'Rejeitado',revisar:'Revisão solicitada'}[_cAcao],_cDesc+'\n\nRegistrado em '+agora()+'.');
   await carregarPend();await carregarDash();
 }
 
