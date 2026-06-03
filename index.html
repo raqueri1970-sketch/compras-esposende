@@ -1119,17 +1119,28 @@ function renderAprovados(){
 // RENDER LISTA
 function rLista(contId,data,tipo){
   var cont=document.getElementById(contId);
-  if(!data.length){cont.innerHTML='<div class="empty-msg">'+(tipo==='pend'?'Nenhuma pendência.':'Nenhum registro.')+'</div>';return;}
-  var html='';
+  if(!data.length){
+    cont.innerHTML='<div class="empty-msg">'+(tipo==='pend'?'Nenhuma pendência.':'Nenhum registro.')+'</div>';
+    return;
+  }
+  cont.innerHTML='';
   data.forEach(function(s){
     var mn=Number(s.menor_valor)||0,mx=Number(s.maior_valor)||0,eco=Number(s.economia)||0;
     var ecoPct=mx>0?(eco/mx*100).toFixed(1):'0';
     var cots=s.cotacoes||[];
     var bcls=tipo==='pend'?'bp':(s.status==='auto-aprovado'?'bauto':'ba');
+
+    // Card principal
+    var card=document.createElement('div');
+    card.className='sc '+bcls;
+    card.setAttribute('data-id',s.id);
+
     var pillHtml=tipo==='pend'?'<span class="pill pp">⏳ Pendente</span>':
       (s.status==='auto-aprovado'?'<span class="pill pau">⚡ Auto</span>':'<span class="pill pa">✅ Aprovado</span>');
-    html+='<div class="sc '+bcls+'" onclick="tgDet('det-'+s.id+'')">'
-      +'<div class="sc-hd"><div><div class="sc-id">'+esc(s.id)+' · '+fData(s.criado_em)+'</div>'
+
+    card.innerHTML=
+      '<div class="sc-hd">'
+      +'<div><div class="sc-id">'+esc(s.id)+' · '+fData(s.criado_em)+'</div>'
       +'<div class="sc-desc">'+esc(s.descricao||'')+'</div>'
       +'<div class="sc-meta"><span>🏢 '+esc(s.area||'—')+'</span>'
       +(s.destino?'<span>📍 '+esc(s.destino)+'</span>':'')
@@ -1138,36 +1149,64 @@ function rLista(contId,data,tipo){
       +(eco>0?'<div class="sc-eco">Econ. '+fBRk(eco)+'</div>':'')
       +'<div style="margin-top:4px">'+pillHtml+'</div></div></div>'
       +'<div class="sc-ft"><div>Menor: <strong>'+esc(s.menor_fornecedor||'—')+' — '+fBR(mn)+'</strong></div>'
-      +'<div style="color:var(--tx3)">'+cots.length+' cot. ▾</div></div></div>';
-    // DETALHE
+      +'<div style="color:var(--tx3)">'+cots.length+' cot. ▾</div></div>';
+
+    // Click no card abre/fecha detalhe
+    (function(sid){
+      card.addEventListener('click',function(){tgDet('det-'+sid);});
+    })(s.id);
+
+    // Detalhe
     var cotRows='';
     cots.forEach(function(c){
-      var isMin=Number(c.valor)===mn,isMax=Number(c.valor)===mx&&cots.length>1;
-      var pdfHtml=c.pdf_url?'<a class="pdf-cot" href="'+esc(c.pdf_url)+'" target="_blank" onclick="event.stopPropagation()">📄 PDF</a>':'<span style="color:var(--tx3);font-size:9px">—</span>';
-      cotRows+='<tr class="'+(isMin?'ct-mn':'')+'"><td>'+(isMin?'<span class="bmn">✓</span> ':'')+esc(c.fornecedor||'')+'</td>'
-        +'<td><strong>'+fBR(c.valor)+'</strong></td><td>'+(c.prazo||'—')+'</td>'
-        +'<td>'+(isMax?'<span class="bmx">Maior</span>':'')+'</td><td>'+pdfHtml+'</td></tr>';
+      var isMin=Number(c.valor)===mn;
+      var isMax=Number(c.valor)===mx&&cots.length>1;
+      var pdfHtml=c.pdf_url
+        ?'<a class="pdf-cot" href="'+esc(c.pdf_url)+'" target="_blank" onclick="event.stopPropagation()">📄 PDF</a>'
+        :'<span style="color:var(--tx3);font-size:9px">—</span>';
+      cotRows+='<tr class="'+(isMin?'ct-mn':'')+'"><td>'+(isMin?'<span class="bmn">✓</span> ':'')
+        +esc(c.fornecedor||'')+'</td>'
+        +'<td><strong>'+fBR(c.valor)+'</strong></td>'
+        +'<td>'+(c.prazo||'—')+'</td>'
+        +'<td>'+(isMax?'<span class="bmx">Maior</span>':'')+'</td>'
+        +'<td>'+pdfHtml+'</td></tr>';
     });
+
     var pdfs=cots.filter(function(c){return c.pdf_url;});
-    var pdfPack=pdfs.length?'<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:var(--rs);padding:8px 12px;margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
-      +'<span style="font-size:12px;font-weight:600;color:#1D4ED8">📦 '+pdfs.length+' PDF(s) anexado(s)</span>'
-      +'<button style="background:#2563EB;color:#fff;border:none;border-radius:6px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();abrPDFs('+JSON.stringify(pdfs.map(function(c){return c.pdf_url;}))+')">Ver todos</button></div>':'';
-    var btns='';
+    var pdfPack='';
+    if(pdfs.length){
+      var urls=JSON.stringify(pdfs.map(function(c){return c.pdf_url;}));
+      pdfPack='<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:var(--rs);'
+        +'padding:8px 12px;margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
+        +'<span style="font-size:12px;font-weight:600;color:#1D4ED8">📦 '+pdfs.length+' PDF(s)</span>'
+        +'<button style="background:#2563EB;color:#fff;border:none;border-radius:6px;padding:5px 12px;'
+        +'font-size:11px;font-weight:700;cursor:pointer;font-family:inherit" '
+        +'onclick="event.stopPropagation();abrPDFs('+esc(urls)+')">Ver todos</button></div>';
+    }
+
+    var btnsHtml='';
     if(tipo==='pend'){
-      btns='<textarea class="fi" id="obs-'+s.id+'" style="margin-top:9px;min-height:48px" placeholder="Observação (opcional)..." onclick="event.stopPropagation()"></textarea>'
+      btnsHtml='<textarea class="fi" id="obs-'+s.id
+        +'" style="margin-top:9px;min-height:48px" placeholder="Observação (opcional)..." '
+        +'onclick="event.stopPropagation()"></textarea>'
         +'<div class="d3">'
-        +'<button class="bap" onclick="event.stopPropagation();abrConf('aprovar',''+s.id+'','+JSON.stringify(s.descricao||'')+',''+fBR(mn)+'','+JSON.stringify(s.menor_fornecedor||'')+')">✅ Aprovar</button>'
-        +'<button class="brv" onclick="event.stopPropagation();abrConf('revisar',''+s.id+'','+JSON.stringify(s.descricao||'')+',''+fBR(mn)+'','')">🔄 Revisar</button>'
-        +'<button class="bre" onclick="event.stopPropagation();abrConf('rejeitar',''+s.id+'','+JSON.stringify(s.descricao||'')+',''+fBR(mn)+'','')">❌ Rejeitar</button>'
+        +'<button class="bap" onclick="event.stopPropagation();abrConf(\'aprovar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\''+esc(s.menor_fornecedor||'')+'\')">✅ Aprovar</button>'
+        +'<button class="brv" onclick="event.stopPropagation();abrConf(\'revisar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">🔄 Revisar</button>'
+        +'<button class="bre" onclick="event.stopPropagation();abrConf(\'rejeitar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">❌ Rejeitar</button>'
         +'</div>';
     }else{
-      btns='<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
+      btnsHtml='<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
         +'<button class="bprint" onclick="event.stopPropagation();window.print()">🖨️ Imprimir</button>'
-        +'<button class="brv" style="padding:8px 14px;font-size:11px" onclick="event.stopPropagation();reenvWA(''+s.id+'')">🔄 Reenviar WhatsApp</button>'
+        +'<button class="brv" style="padding:8px 14px;font-size:11px" '
+        +'onclick="event.stopPropagation();reenvWA(\''+s.id+'\')">🔄 Reenviar WhatsApp</button>'
         +'</div>';
     }
-    html+='<div class="det" id="det-'+s.id+'">'
-      +'<div class="card"><div class="card-hd"><span class="cht">Detalhes</span>'+pillHtml+'</div>'
+
+    var det=document.createElement('div');
+    det.className='det';
+    det.id='det-'+s.id;
+    det.innerHTML=
+      '<div class="card"><div class="card-hd"><span class="cht">Detalhes</span>'+pillHtml+'</div>'
       +'<div style="padding:.85rem 1.1rem">'
       +(s.area?'<div class="ir"><span class="il">Área</span><span class="iv">'+esc(s.area)+'</span></div>':'')
       +(s.categoria?'<div class="ir"><span class="il">Categoria</span><span class="iv">'+esc(s.categoria)+'</span></div>':'')
@@ -1175,16 +1214,20 @@ function rLista(contId,data,tipo){
       +(s.justificativa?'<div class="ir"><span class="il">Justificativa</span><span class="iv">'+esc(s.justificativa)+'</span></div>':'')
       +(s.decidido_em?'<div class="ir"><span class="il">Decidido em</span><span class="iv">'+fData(s.decidido_em)+'</span></div>':'')
       +(s.observacao?'<div class="ir"><span class="il">Obs.</span><span class="iv">'+esc(s.observacao)+'</span></div>':'')
-      +'<table class="ct"><thead><tr><th>Fornecedor</th><th>Valor</th><th>Prazo</th><th></th><th>PDF</th></tr></thead><tbody>'+cotRows+'</tbody></table>'
-      +(eco>0?'<div class="eco-b"><div class="eco-r"><span style="color:var(--vd)">Menor</span><span style="font-weight:700;color:var(--vd)">'+fBR(mn)+'</span></div>'
+      +'<table class="ct"><thead><tr><th>Fornecedor</th><th>Valor</th><th>Prazo</th><th></th><th>PDF</th></tr></thead>'
+      +'<tbody>'+cotRows+'</tbody></table>'
+      +(eco>0?'<div class="eco-b"><div class="eco-r"><span style="color:var(--vd)">Menor</span>'
+        +'<span style="font-weight:700;color:var(--vd)">'+fBR(mn)+'</span></div>'
         +'<div class="eco-r"><span>Maior</span><span>'+fBR(mx)+'</span></div>'
         +'<div class="eco-r t"><span>Economia</span><span>'+fBR(eco)+' ('+ecoPct+'%)</span></div></div>':'')
-      +pdfPack+btns
-      +'</div></div></div>';
-  });
-  cont.innerHTML=html;
-}
+      +pdfPack
+      +btnsHtml
+      +'</div></div>';
 
+    cont.appendChild(card);
+    cont.appendChild(det);
+  });
+}
 function tgDet(id){
   var d=document.getElementById(id);if(!d)return;
   var on=d.classList.contains('on');
