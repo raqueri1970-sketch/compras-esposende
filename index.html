@@ -1307,7 +1307,7 @@ async function enviar(){
       });
       if(status==='auto-aprovado'){
         LOCAL_DATA.eco = (LOCAL_DATA.eco||0)+(mx-mn);
-        suc('⚡','Aprovação automática (local)',desc+'\n'+fBR(mn)+' · '+mc.fornecedor+'\nSalvo localmente (sem servidor).');
+        suc('Aprovação automática (local)',desc+'\n'+fBR(mn)+' · '+mc.fornecedor+'\nSalvo localmente (sem servidor).');
       } else {
         suc('📤','Enviado (local)!',id+'\n'+desc+'\n'+fBR(mn)+'\nSalvo localmente — conecte via servidor para persistir no banco.');
       }
