@@ -1332,10 +1332,7 @@ async function enviar(){
     suc('⚡','Aprovação automática: '+desc+' '+fBR(mn)+' - '+mc.fornecedor+' Liberada automaticamente.'); 
     }else{
       await reenvWA(id);
-      suc('📤','Enviado!',id+'
-'+desc+'
-'+fBR(mn)+'
-Presidência notificada via WhatsApp.');
+    suc('📩','Enviado! '+id+' '+desc+' '+fBR(mn)+' Presidência notificada via WhatsApp.');  
     }
     limpar();
     document.getElementById('cnt-p').textContent=Number(document.getElementById('cnt-p').textContent||0)+(status==='pendente'?1:0);
