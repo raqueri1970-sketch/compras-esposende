@@ -1329,9 +1329,7 @@ async function enviar(){
     await sb.from('cotacoes').insert(cots.map(function(c){return {solicitacao_id:id,fornecedor:c.fornecedor,valor:c.valor,prazo:c.prazo,pdf_url:c.pdf_url};}));
     if(status==='auto-aprovado'){
       await sb.from('decisoes').insert({solicitacao_id:id,acao:'auto-aprovado',observacao:'≤ R$ 5.000'});
-      suc('⚡','Aprovação automática',desc+'
-'+fBR(mn)+' · '+mc.fornecedor+'
-Liberada automaticamente.');
+    suc('⚡','Aprovação automática: '+desc+' '+fBR(mn)+' - '+mc.fornecedor+' Liberada automaticamente.'); 
     }else{
       await reenvWA(id);
       suc('📤','Enviado!',id+'
