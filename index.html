@@ -1462,7 +1462,7 @@ async function reenvWA(solId){
        + (Number(c.valor)===mn ? ' ← menor' : '')
        + '\n';
 });
-  var link='https://compras-esposende.vercel.app//aprovar?id='+solId+'&tk='+Math.random().toString(36).slice(2,7);
+  var link='https://compras-esposende.vercel.app/aprovar?id='+solId+'&tk='+Math.random().toString(36).slice(2,7);
   var msg =
 '🛒 *APROVAÇÃO DE COMPRA — ESPOSENDE*\n\n' +
 'Solicitação: *#' + solId + '*\n' +
@@ -1472,7 +1472,7 @@ async function reenvWA(solId){
 txt + '\n\n' +
 '💰 Economia: *' + fBR(Number(s.economia)||0) + '*\n\n' +
 '👇 Aprovar:\n' +
-'https://' + link;
+link;
   var tel=((document.getElementById('cfg-wa')||{}).value||WA_TEL).replace(/\D/g,'');
   window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg),'_blank');
 }
