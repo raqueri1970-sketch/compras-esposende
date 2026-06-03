@@ -1414,19 +1414,15 @@ function abrConf(acao,id,desc,val,forn){
   _cAcao=acao;_cSolId=id;_cDesc=desc;
   var t={aprovar:'Confirmar aprovação?',rejeitar:'Confirmar rejeição?',revisar:'Solicitar revisão?'};
   var d={
-    aprovar:id+'
-'+desc+'
+  aprovar:
+    id+'\n'+desc+'\nFornecedor: '+(forn||'-')+' - '+val,
 
-Fornecedor: '+(forn||'—')+' — '+val,
-    rejeitar:id+'
-'+desc+'
+  rejeitar:
+    id+'\n'+desc+'\n\nComprador será notificado.',
 
-Comprador será notificado.',
-    revisar:id+'
-'+desc+'
-
-Novas cotações serão solicitadas.'
-  };
+  revisar:
+    id+'\n'+desc+'\n\nNovas cotações serão solicitadas.'
+};
   var cor={aprovar:'var(--vd)',rejeitar:'var(--vm)',revisar:'var(--az3)'};
   document.getElementById('conf-t').textContent=t[acao];
   document.getElementById('conf-d').textContent=d[acao];
