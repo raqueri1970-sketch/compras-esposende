@@ -1437,7 +1437,7 @@ function rLista(contId,data,tipo){
     }
 
     var btnsHtml='';
-    if(tipo==='pend'){
+    if(tipo==='pend' && EU_PERFIL!=='comprador'){
       btnsHtml='<textarea class="fi" id="obs-'+s.id
         +'" style="margin-top:9px;min-height:48px" placeholder="Observação (opcional)..." '
         +'onclick="event.stopPropagation()"></textarea>'
@@ -1450,11 +1450,9 @@ function rLista(contId,data,tipo){
     }else{
       btnsHtml='<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
         +'<button class="bprint" onclick="event.stopPropagation();window.print()">🖨️ Imprimir</button>'
-        +'<button class="brv" style="padding:8px 14px;font-size:11px" '
-        +'onclick="event.stopPropagation();reenvWA(\''+s.id+'\')">🔄 Reenviar WhatsApp</button>'
+        +(EU_PERFIL!=='comprador'?'<button class="brv" style="padding:8px 14px;font-size:11px" onclick="event.stopPropagation();reenvWA(\''+s.id+'\')">🔄 Reenviar WhatsApp</button>':'')
         +'</div>';
     }
-
     var det=document.createElement('div');
     det.className='det';
     det.id='det-'+s.id;
@@ -2010,11 +2008,9 @@ function togglePdfInline(btn, url){
   var naRev=document.getElementById('na-rev');
 
   if(EU_PERFIL==='comprador'){
-    // Comprador: vê Nova + Aprovados (para emitir pedidos) + Revisão (acompanhar)
+    // Comprador: vê Dashboard, Pendentes, Aprovados, Revisão, Nova — SEM Admin
     if(badge){badge.textContent='Comprador';badge.style.background='rgba(59,130,246,.3)';}
     if(naAdmin) naAdmin.style.display='none';
-    if(naDash) naDash.style.display='none';
-    if(naPend) naPend.style.display='none';
     // Iniciar na aba Aprovados
     setTimeout(function(){irAba('aprov',naAprov);},100);
   } else if(EU_PERFIL==='presidente'){
@@ -2133,11 +2129,13 @@ function rListaRev(contId,data){
       +'</div>'
       +'<div style="padding:0 .9rem .85rem">'
         +(cots.length?'<table class="ct"><thead><tr><th>Fornecedor</th><th>Valor</th><th>Prazo</th><th>PDF</th></tr></thead><tbody>'+cotRows+'</tbody></table>':'')
-        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px">'
+        +(EU_PERFIL!=='comprador'?
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px">'
           +'<button class="bap" style="font-size:12px;padding:10px" onclick="event.stopPropagation();editarSolicitacao(\''+s.id+'\')">✏️ Editar e Reenviar</button>'
           +'<button class="bre" style="font-size:12px;padding:10px" onclick="event.stopPropagation();abrirPinModal(\'rejeitar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">❌ Rejeitar</button>'
-        +'</div>'
-        +'<button class="brv" style="width:100%;margin-top:7px;padding:10px;font-size:12px;background:#2563EB;color:#fff" onclick="event.stopPropagation();reenvWA(\''+s.id+'\')">📲 Reenviar ao Presidente via WhatsApp</button>'
+          +'</div>'
+          +'<button class="brv" style="width:100%;margin-top:7px;padding:10px;font-size:12px;background:#2563EB;color:#fff" onclick="event.stopPropagation();reenvWA(\''+s.id+'\')">📲 Reenviar ao Presidente via WhatsApp</button>'
+        :'<div style="margin-top:10px"><button class="bprint" onclick="event.stopPropagation();window.print()">🖨️ Imprimir</button></div>')
       +'</div>';
     cont.appendChild(card);
   });
