@@ -9,7 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 function limparFormulario(){
-  
+
   if(!confirm('Deseja realmente limpar todos os dados desta solicitação?')){
     return;
   }
@@ -300,7 +300,7 @@ option{
   </div>
   <div class="hd-r">
     <div class="conn-dot" id="conn-dot" title="Supabase"></div><span class="hd-date" id="hd-date" style="color:rgba(255,255,255,.5);font-size:10px"></span><span id="conn-lbl" style="color:rgba(255,255,255,.6);font-size:10px">...</span>
-    <div class="hd-badge">Admin</div><div style="color:rgba(255,255,255,.35);font-size:9px;font-weight:600">v3.1</div>
+    <div class="hd-badge" id="hd-perfil-badge">Admin</div><div style="color:rgba(255,255,255,.35);font-size:9px;font-weight:600">v3.1</div>
   </div>
 </div>
 
@@ -309,8 +309,8 @@ option{
   padding:10px 16px;align-items:center;gap:10px;flex-wrap:wrap">
   <span style="font-size:18px">⚠️</span>
   <div style="flex:1">
-    <div style="font-size:12px;font-weight:700;color:#92400E">Modo offline — dados salvos localmente</div>
-    <div style="font-size:10px;color:#78350F;margin-top:1px">Para conectar ao banco Supabase, abra via servidor: <strong>python -m http.server 8000</strong></div>
+    <div style="font-size:12px;font-weight:700;color:#92400E">Modo offline — dados não persistem</div>
+    <div style="font-size:10px;color:#78350F;margin-top:1px">Acesse pelo link do Vercel para usar o banco de dados. Dados inseridos agora serão perdidos ao fechar.</div>
   </div>
   <button onclick="document.getElementById('aviso-servidor').style.display='none'"
     style="background:#F59E0B;border:none;border-radius:6px;padding:4px 10px;font-weight:700;cursor:pointer;font-size:11px">✕</button>
@@ -976,7 +976,7 @@ option{
       <div class="fg"><label class="fl">WhatsApp Presidência</label><input class="fi" id="cfg-wa" value="5511975382103" type="tel"></div>
       <div style="background:rgba(37,99,235,.08);border:1.5px solid rgba(37,99,235,.3);border-radius:10px;padding:12px 14px;margin-top:4px">
         <div style="font-size:12px;font-weight:800;color:#60A5FA;margin-bottom:8px">🔐 PIN do Presidente</div>
-        <div style="font-size:11px;color:#94A3B8;margin-bottom:10px">Somente quem souber o PIN consegue Aprovar, Rejeitar ou Revisar. Padrão inicial: <strong style="color:#fff">1234</strong></div>
+
         <div class="fg"><label class="fl">Novo PIN (4 dígitos)</label><input class="fi" id="cfg-pin-novo" type="password" maxlength="4" inputmode="numeric" placeholder="••••"></div>
         <div class="fg"><label class="fl">Confirmar PIN</label><input class="fi" id="cfg-pin-conf" type="password" maxlength="4" inputmode="numeric" placeholder="••••"></div>
         <button class="bap" style="width:100%;padding:10px;font-size:13px;margin-top:4px" onclick="salvarPin()">🔐 Salvar novo PIN</button>
@@ -984,6 +984,15 @@ option{
       <button class="bsend" style="margin-top:0;padding:10px" onclick="salvarConfigs()">Salvar configurações</button>
     </div>
   </div>
+  <div class="card">
+    <div class="card-hd"><span class="cht">🔗 Links de acesso</span></div>
+    <div style="padding:.85rem 1.1rem;display:flex;flex-direction:column;gap:9px">
+      <div style="font-size:11px;color:#94A3B8;margin-bottom:4px">Compartilhe os links abaixo com cada usuário. Cada perfil vê apenas o que precisa.</div>
+      <div id="links-perfis"></div>
+      <button class="bsend" style="margin-top:4px;padding:10px;font-size:12px" onclick="gerarLinks()">🔗 Gerar Links</button>
+    </div>
+  </div>
+
   <div class="card">
     <div class="card-hd"><span class="cht">🗑️ Limpeza do banco</span></div>
     <div style="padding:.85rem 1.1rem;display:flex;flex-direction:column;gap:9px">
@@ -1069,9 +1078,17 @@ var sb=null;
 var _aprovTodos=[];
 var _cAcao='',_cSolId='',_cDesc='',_cVal='',_cForn='';
 var _abaAposDecisao=null;
-// Perfil do usuário — admin por padrão (sem auth ainda)
+// Perfil detectado pela URL: ?perfil=comprador | presidente | admin
 var EU_PERFIL='admin';
-var EU_NOME='Ricardo';
+var EU_NOME='Admin';
+(function(){
+  var params=new URLSearchParams(window.location.search);
+  var p=(params.get('perfil')||'').toLowerCase();
+  var n=(params.get('nome')||'').trim();
+  if(p==='comprador'){EU_PERFIL='comprador';EU_NOME=n||'Comprador';}
+  else if(p==='presidente'){EU_PERFIL='presidente';EU_NOME=n||'Paulo';}
+  else {EU_PERFIL='admin';EU_NOME=n||'Ricardo';}
+})();
 // PIN do Presidente — admin altera na aba Configurações
 var PIN_PRESIDENTE='1234';
 (function(){try{var p=localStorage.getItem('esp_pin');if(p)PIN_PRESIDENTE=p;}catch(e){}}());
@@ -1543,7 +1560,7 @@ async function enviar(){
   var desc=(document.getElementById('n-desc').value||'').trim();
   var area=document.getElementById('n-area').value;
   if(!desc||!area){alert('Preencha Área e Descrição.');return;}
-  var sol=(document.getElementById('n-sol').value||'Comprador').trim();
+  var sol=(document.getElementById('n-sol').value||EU_NOME||'Comprador').trim();
   var cots=[];
   for(var i=0;i<3;i++){
     var fn=getFornNome(i);
@@ -1889,7 +1906,7 @@ async function reenvWA(solId){
 +'\n'
 +cotLines+'\n\n'
 +'💰 Economia gerada: *'+fBR(eco)+'*\n\n'
-+'👉 '+link+'\n'
++'👉 '+link+'/pendentes\n'
 +'Solicitação: *#'+solId+'*';
 
   window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg),'_blank');
@@ -1905,6 +1922,49 @@ function fSuc(){
     _abaAposDecisao=null;
     irAba(aba, document.getElementById(destinos[aba]));
   }
+}
+
+// GERAR LINKS DE ACESSO
+var _linksGerados=[];
+function gerarLinks(){
+  var base=window.location.href.split('?')[0];
+  _linksGerados=[
+    {label:'Comprador - Jony', url:base+'?perfil=comprador&nome=Jony', cor:'#2563EB'},
+    {label:'Comprador - Victor', url:base+'?perfil=comprador&nome=Victor', cor:'#2563EB'},
+    {label:'Presidente - Paulo', url:base+'?perfil=presidente&nome=Paulo', cor:'#7C3AED'},
+    {label:'Admin - Ricardo', url:base+'?perfil=admin&nome=Ricardo', cor:'#16A34A'},
+  ];
+  var cont=document.getElementById('links-perfis');
+  if(!cont)return;
+  var html='';
+  _linksGerados.forEach(function(l,i){
+    html+='<div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 12px;margin-bottom:7px">';
+    html+='<div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:6px">'+l.label+'</div>';
+    html+='<div style="display:flex;gap:6px;align-items:center">';
+    html+='<input readonly id="link-inp-'+i+'" value="" style="flex:1;font-size:9px;padding:5px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#CBD5E1;font-family:monospace">';
+    html+='<button onclick="copiarLink('+i+')" style="background:'+l.cor+';color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Copiar</button>';
+    html+='<button onclick="abrirLink('+i+')" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">Abrir</button>';
+    html+='</div></div>';
+  });
+  cont.innerHTML=html;
+  // Preencher inputs após render
+  _linksGerados.forEach(function(l,i){
+    var el=document.getElementById('link-inp-'+i);
+    if(el) el.value=l.url;
+  });
+}
+function copiarLink(i){
+  var url=_linksGerados[i]?_linksGerados[i].url:'';
+  if(!url)return;
+  navigator.clipboard.writeText(url).then(function(){
+    suc('Link copiado!','Compartilhe via WhatsApp','Cole o link e envie para o usuario.');
+  }).catch(function(){
+    prompt('Copie o link:',url);
+  });
+}
+function abrirLink(i){
+  var url=_linksGerados[i]?_linksGerados[i].url:'';
+  if(url) window.open(url,'_blank');
 }
 
 // DRAG DROP
@@ -1940,10 +2000,32 @@ function togglePdfInline(btn, url){
   var el=document.getElementById('hd-date');
   if(el) el.textContent=d.getDate()+' '+meses[d.getMonth()]+' '+d.getFullYear();
 
-  // Admin tab somente para Ricardo (EU_PERFIL=admin)
-  if(EU_PERFIL==='admin'){
-    var a=document.getElementById('na-admin');
-    if(a) a.style.display='flex';
+  // Configurar abas e badge por perfil
+  var badge=document.getElementById('hd-perfil-badge');
+  var naAdmin=document.getElementById('na-admin');
+  var naNova=document.getElementById('na-nova');
+  var naDash=document.getElementById('na-dash');
+  var naPend=document.getElementById('na-pend');
+  var naAprov=document.getElementById('na-aprov');
+  var naRev=document.getElementById('na-rev');
+
+  if(EU_PERFIL==='comprador'){
+    // Comprador: vê Nova + Aprovados (para emitir pedidos) + Revisão (acompanhar)
+    if(badge){badge.textContent='Comprador';badge.style.background='rgba(59,130,246,.3)';}
+    if(naAdmin) naAdmin.style.display='none';
+    if(naDash) naDash.style.display='none';
+    if(naPend) naPend.style.display='none';
+    // Iniciar na aba Aprovados
+    setTimeout(function(){irAba('aprov',naAprov);},100);
+  } else if(EU_PERFIL==='presidente'){
+    // Presidente: vê Pendentes, Aprovados, Revisão — SEM Admin, SEM Nova
+    if(badge){badge.textContent='Presidente';badge.style.background='rgba(139,92,246,.4)';}
+    if(naAdmin) naAdmin.style.display='none';
+    if(naNova) naNova.style.display='none';
+  } else {
+    // Admin: vê tudo
+    if(badge){badge.textContent='Admin';}
+    if(naAdmin) naAdmin.style.display='flex';
   }
 
   // Campos prazo_pag e entrega: exibir nos detalhes
@@ -1984,6 +2066,9 @@ function salvarConfigs(){
     if(w){ var el=document.getElementById('cfg-wa'); if(el) el.value=w; WA_TEL=w; }
     if(document.getElementById('cfg-limite')) document.getElementById('cfg-limite').value=LIMITE;
   }catch(e){}
+  // Preencher nome do solicitante automaticamente
+  var nSolEl=document.getElementById('n-sol');
+  if(nSolEl&&EU_NOME&&EU_NOME!=='Admin') nSolEl.value=EU_NOME;
 })();
 
 
