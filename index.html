@@ -1068,6 +1068,7 @@ var FORN=[{"nome": "LOGNET", "area": "Materiais de TI e automação", "vendedor"
 var sb=null;
 var _aprovTodos=[];
 var _cAcao='',_cSolId='',_cDesc='',_cVal='',_cForn='';
+var _abaAposDecisao=null;
 // Perfil do usuário — admin por padrão (sem auth ainda)
 var EU_PERFIL='admin';
 var EU_NOME='Ricardo';
@@ -1827,17 +1828,8 @@ async function confAcao(){
   await carregarAprov();
   await carregarRev();
 
-  // Mostrar popup de sucesso — ao fechar, navega para a aba certa
-  var abaDestino = {aprovar:'aprov', rejeitar:'pend', revisar:'rev'}[_cAcao];
-  var naDestino = {aprov:'na-aprov', pend:'na-pend', rev:'na-rev'}[abaDestino];
-
-  // Substituir fSuc temporariamente para redirecionar após fechar
-  var _fSucOrig = fSuc;
-  fSuc = function(){
-    document.getElementById('suc-ov').classList.remove('on');
-    fSuc = _fSucOrig;
-    irAba(abaDestino, document.getElementById(naDestino));
-  };
+  // Guardar aba destino em variável global — usada pelo fSuc
+  _abaAposDecisao = {aprovar:'aprov', rejeitar:'pend', revisar:'rev'}[_cAcao];
 
   suc(icos[_cAcao],{aprovar:'✅ Aprovado',rejeitar:'❌ Rejeitado',revisar:'🔄 Revisão solicitada'}[_cAcao],msgs[_cAcao]);
 }
@@ -1905,7 +1897,15 @@ async function reenvWA(solId){
 
 // SUC
 function suc(ico,t,d){document.getElementById('suc-i').textContent=ico;document.getElementById('suc-t').textContent=t;document.getElementById('suc-d').textContent=d;document.getElementById('suc-ov').classList.add('on');}
-function fSuc(){document.getElementById('suc-ov').classList.remove('on');}
+function fSuc(){
+  document.getElementById('suc-ov').classList.remove('on');
+  if(_abaAposDecisao){
+    var destinos={aprov:'na-aprov',pend:'na-pend',rev:'na-rev'};
+    var aba=_abaAposDecisao;
+    _abaAposDecisao=null;
+    irAba(aba, document.getElementById(destinos[aba]));
+  }
+}
 
 // DRAG DROP
 var dz=document.getElementById('dz');
