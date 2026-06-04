@@ -1276,6 +1276,7 @@ function rLista(contId,data,tipo){
         +'<button class="bap" onclick="event.stopPropagation();abrConf(\'aprovar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\''+esc(s.menor_fornecedor||'')+'\')">✅ Aprovar</button>'
         +'<button class="brv" onclick="event.stopPropagation();abrConf(\'revisar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">🔄 Revisar</button>'
         +'<button class="bre" onclick="event.stopPropagation();abrConf(\'rejeitar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">❌ Rejeitar</button>'
+        +'<button class="brv" style="background:#2563EB;color:#fff" onclick="event.stopPropagation();reenvWA(\''+s.id+'\')">📲 Reenviar</button>'
         +'</div>';
     }else{
       btnsHtml='<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
