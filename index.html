@@ -1689,7 +1689,7 @@ var _pinCallback=null;
 
 function abrirPinModal(acao,id,desc,val,forn){
   // Guarda contexto da ação para executar após PIN correto
-  _cAcao=acao;_cSolId=id;_cDesc=desc;
+  _cAcao=acao;_cSolId=id;_cDesc=desc;_cVal=val||'';_cForn=forn||'';
   _pinBuffer='';
   _pinAtualizarDots();
   document.getElementById('pin-erro').style.display='none';
