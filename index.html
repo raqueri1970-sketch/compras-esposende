@@ -6,7 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0F172A">
 <title>Compras Esposende</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
 function limparFormulario(){
 
   if(!confirm('Deseja realmente limpar todos os dados desta solicitação?')){
@@ -58,7 +59,7 @@ function limparFormulario(){
   --br:rgba(30,41,59,.9);--r:14px;--rs:9px;
   --sh:0 4px 24px rgba(0,0,0,.4);--shl:0 8px 40px rgba(0,0,0,.6);
 }
-body{font-family:'Inter',system-ui,sans-serif;background:#000000;color:var(--tx);min-height:100vh;min-height:-webkit-fill-available}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif;background:#000000;color:var(--tx);min-height:100vh;min-height:-webkit-fill-available}
 .hd{background:#030712;backdrop-filter:blur(20px);height:58px;padding:0 1rem;display:flex;align-items:center;
     justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 4px 24px rgba(0,0,0,.5);border-bottom:1px solid rgba(255,255,255,.08)}
 .hd-l{display:flex;align-items:center;gap:10px}
@@ -201,8 +202,8 @@ textarea.fi{resize:vertical;min-height:60px}
           display:none;align-items:flex-end;justify-content:center}
 .conf-ov.on{display:flex}
 .conf-sh{background:#fff;border-radius:20px 20px 0 0;padding:1.4rem;width:100%;max-width:600px}
-.conf-t{font-size:16px;font-weight:700;margin-bottom:5px}
-.conf-d{font-size:12px;color:#F1F5F9;margin-bottom:1.1rem;line-height:1.6;white-space:pre-wrap}
+.conf-t{font-size:16px;font-weight:700;margin-bottom:5px;color:#111827}
+.conf-d{font-size:12px;color:#374151;margin-bottom:1.1rem;line-height:1.6;white-space:pre-wrap}
 .conf-bs{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 .suc-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;
          display:none;align-items:center;justify-content:center}
@@ -328,6 +329,7 @@ option{
   <div class="na on" id="na-dash" onclick="irAba('dash',this)">📊 Dashboard</div>
   <div class="na" id="na-pend" onclick="irAba('pend',this)">⏳ Pendentes <span class="na-n" id="cnt-p">0</span></div>
   <div class="na" id="na-aprov" onclick="irAba('aprov',this)">✅ Aprovados</div>
+  <div class="na" id="na-rev" onclick="irAba('rev',this)">🔄 Revisão <span class="na-n" id="cnt-rev" style="background:rgba(245,158,11,.2);color:#F59E0B">0</span></div>
   <div class="na" id="na-nova" onclick="irAba('nova',this)">➕ Nova</div>
   <div class="na" id="na-admin" onclick="irAba('admin',this)">⚙️ Admin</div>
 </div>
@@ -350,9 +352,9 @@ option{
       <div style="text-align:right"><div class="dh-lbl">Taxa aprovação</div><div class="dh-val" id="d-taxa" style="font-size:22px">—%</div></div>
     </div>
     <div class="dh-grid">
-      <div class="dm"><div class="dm-l">Aprovadas</div><div class="dm-v" id="d-aprov">—</div><div class="dm-s" id="d-aprov-v">—</div></div>
-      <div class="dm"><div class="dm-l">Pendentes</div><div class="dm-v" id="d-pend">—</div><div class="dm-s" id="d-pend-v">—</div></div>
-      <div class="dm"><div class="dm-l">Auto-aprovadas</div><div class="dm-v" id="d-auto">—</div><div class="dm-s">≤ R$ 5.000</div></div>
+      <div class="dm" style="cursor:pointer" onclick="kpiDrill('aprov')"><div class="dm-l">Aprovadas ▾</div><div class="dm-v" id="d-aprov">—</div><div class="dm-s" id="d-aprov-v">—</div></div>
+      <div class="dm" style="cursor:pointer" onclick="irAba('pend',document.getElementById('na-pend'))"><div class="dm-l">Pendentes ▾</div><div class="dm-v" id="d-pend">—</div><div class="dm-s" id="d-pend-v">—</div></div>
+      <div class="dm" style="cursor:pointer" onclick="kpiDrill('auto')"><div class="dm-l">Auto-aprovadas ▾</div><div class="dm-v" id="d-auto">—</div><div class="dm-s">≤ R$ 5.000</div></div>
       <div class="dm"><div class="dm-l">Ticket médio</div><div class="dm-v" id="d-ticket">—</div><div class="dm-s">por compra</div></div>
     </div>
   </div>
@@ -365,10 +367,24 @@ option{
     <div class="bar-wrap" id="bar-forns"><div class="empty-msg">Carregando...</div></div>
   </div>
   <div class="kpi3">
-    <div class="kpi"><div class="kpi-n" id="d-mes" style="color:var(--vd)">—</div><div class="kpi-l">Este mês</div></div>
-    <div class="kpi"><div class="kpi-n" id="d-rej" style="color:var(--vm)">—</div><div class="kpi-l">Rejeitadas</div></div>
-    <div class="kpi"><div class="kpi-n" id="d-rev" style="color:var(--la)">—</div><div class="kpi-l">Em revisão</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="kpiDrill('mes')"><div class="kpi-n" id="d-mes" style="color:var(--vd)">—</div><div class="kpi-l">Este mês</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="kpiDrill('rej')"><div class="kpi-n" id="d-rej" style="color:var(--vm)">—</div><div class="kpi-l">Rejeitadas ▾</div></div>
+    <div class="kpi" style="cursor:pointer" onclick="kpiDrill('rev')"><div class="kpi-n" id="d-rev" style="color:var(--la)">—</div><div class="kpi-l">Em revisão ▾</div></div>
   </div>
+  <!-- Modal KPI drill-down -->
+  <div id="kpi-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:250;align-items:flex-end;justify-content:center" onclick="fecharKpiModal(event)">
+    <div style="background:#1E293B;border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:80vh;overflow-y:auto;padding:1.2rem" onclick="event.stopPropagation()">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span id="kpi-modal-title" style="font-size:15px;font-weight:700;color:#fff"></span>
+        <button onclick="fecharKpiModal()" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:28px;height:28px;color:#fff;font-size:14px;cursor:pointer">✕</button>
+      </div>
+      <div id="kpi-modal-body"></div>
+    </div>
+  </div>
+  <!-- Botão relatório mensal -->
+  <button onclick="imprimirRelatorio()" style="width:100%;background:rgba(37,99,235,.15);color:#60A5FA;border:1.5px solid rgba(37,99,235,.35);border-radius:var(--rs);padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px;margin-top:2px">
+    🖨️ Imprimir Relatório do Período
+  </button>
 </div>
 
 <!-- PENDENTES -->
@@ -581,9 +597,15 @@ option{
 <option value="Top Mix Metais E Esquadrias">Top Mix Metais E Esquadrias — Materiais de ferro e aço</option>
 <option value="PALMA PARAFUSOS">PALMA PARAFUSOS — Materiais MRO</option>
 </select>
+          <div style="margin-top:3px;display:flex;gap:4px;align-items:center">
+            <input id="fn0_custom" placeholder="Ou digitar novo fornecedor..." 
+              style="flex:1;border:1px dashed rgba(255,255,255,.3);border-radius:6px;padding:4px 7px;font-size:10px;
+              font-family:inherit;background:rgba(255,255,255,.08);color:#fff;font-weight:500"
+              oninput="onFCCustom(0)" onfocus="if(this.value)document.getElementById('fn0').value=''">
+          </div>
           <div class="forn-info" id="fi0"></div>
           <input id="vl0" placeholder="R$ valor" oninput="rc()">
-          <input id="pr0" placeholder="Prazo">
+          <select id="pr0" style="width:100%;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:5px 7px;font-size:11px;font-family:inherit;background:#fff;margin-top:2px;color:#111"><option value="">Prazo pag.</option><option>Pix/À vista</option><option>7 dias</option><option>15 dias</option><option>21 dias</option><option>28 dias</option><option>30 dias</option><option>45 dias</option><option>60 dias</option></select>
           <label class="pdf-u" id="pu0">📎 PDF<input type="file" accept=".pdf,image/*" id="pf0" onchange="mkP(0)"></label>
         </div>
         <div class="cc" id="cc1">
@@ -732,9 +754,15 @@ option{
 <option value="Top Mix Metais E Esquadrias">Top Mix Metais E Esquadrias — Materiais de ferro e aço</option>
 <option value="PALMA PARAFUSOS">PALMA PARAFUSOS — Materiais MRO</option>
 </select>
+          <div style="margin-top:3px;display:flex;gap:4px;align-items:center">
+            <input id="fn1_custom" placeholder="Ou digitar novo fornecedor..." 
+              style="flex:1;border:1px dashed rgba(255,255,255,.3);border-radius:6px;padding:4px 7px;font-size:10px;
+              font-family:inherit;background:rgba(255,255,255,.08);color:#fff;font-weight:500"
+              oninput="onFCCustom(1)" onfocus="if(this.value)document.getElementById('fn1').value=''">
+          </div>
           <div class="forn-info" id="fi1"></div>
           <input id="vl1" placeholder="R$ valor" oninput="rc()">
-          <input id="pr1" placeholder="Prazo">
+          <select id="pr1" style="width:100%;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:5px 7px;font-size:11px;font-family:inherit;background:#fff;margin-top:2px;color:#111"><option value="">Prazo pag.</option><option>Pix/À vista</option><option>7 dias</option><option>15 dias</option><option>21 dias</option><option>28 dias</option><option>30 dias</option><option>45 dias</option><option>60 dias</option></select>
           <label class="pdf-u" id="pu1">📎 PDF<input type="file" accept=".pdf,image/*" id="pf1" onchange="mkP(1)"></label>
         </div>
         <div class="cc" id="cc2">
@@ -883,9 +911,15 @@ option{
 <option value="Top Mix Metais E Esquadrias">Top Mix Metais E Esquadrias — Materiais de ferro e aço</option>
 <option value="PALMA PARAFUSOS">PALMA PARAFUSOS — Materiais MRO</option>
 </select>
+          <div style="margin-top:3px;display:flex;gap:4px;align-items:center">
+            <input id="fn2_custom" placeholder="Ou digitar novo fornecedor..." 
+              style="flex:1;border:1px dashed rgba(255,255,255,.3);border-radius:6px;padding:4px 7px;font-size:10px;
+              font-family:inherit;background:rgba(255,255,255,.08);color:#fff;font-weight:500"
+              oninput="onFCCustom(2)" onfocus="if(this.value)document.getElementById('fn2').value=''">
+          </div>
           <div class="forn-info" id="fi2"></div>
           <input id="vl2" placeholder="R$ valor" oninput="rc()">
-          <input id="pr2" placeholder="Prazo">
+          <select id="pr2" style="width:100%;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:5px 7px;font-size:11px;font-family:inherit;background:#fff;margin-top:2px;color:#111"><option value="">Prazo pag.</option><option>Pix/À vista</option><option>7 dias</option><option>15 dias</option><option>21 dias</option><option>28 dias</option><option>30 dias</option><option>45 dias</option><option>60 dias</option></select>
           <label class="pdf-u" id="pu2">📎 PDF<input type="file" accept=".pdf,image/*" id="pf2" onchange="mkP(2)"></label>
         </div>
       </div>
@@ -914,6 +948,16 @@ option{
   </div>
 </div>
 
+<!-- REVISÃO -->
+<div id="aba-rev" class="w" style="display:none">
+  <div class="kpi3">
+    <div class="kpi"><div class="kpi-n" id="kr-n" style="color:var(--la)">0</div><div class="kpi-l">Em revisão</div></div>
+    <div class="kpi"><div class="kpi-n" id="kr-val" style="color:var(--az2)">—</div><div class="kpi-l">Valor total</div></div>
+    <div class="kpi"><div class="kpi-n" id="kr-dias" style="color:var(--ci3)">—</div><div class="kpi-l">Mais antigo</div></div>
+  </div>
+  <div id="lista-rev"><div class="empty-msg">Carregando...</div></div>
+</div>
+
 <!-- ADMIN -->
 <div id="aba-admin" class="w" style="display:none">
   <div class="card">
@@ -930,10 +974,21 @@ option{
     <div style="padding:.85rem 1.1rem">
       <div class="fg"><label class="fl">Limite para aprovação (R$)</label><input class="fi" id="cfg-limite" type="number" value="5000"></div>
       <div class="fg"><label class="fl">WhatsApp Presidência</label><input class="fi" id="cfg-wa" value="5511975382103" type="tel"></div>
-      <button class="bsend" style="margin-top:0;padding:10px" onclick="suc('✅','Configurações salvas','Alterações aplicadas com sucesso.')">Salvar</button>
+      <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:9px 12px">
+        <div style="font-size:11px;font-weight:700;color:#22c55e;margin-bottom:3px">✅ Aprovação sem PIN</div>
+        <div style="font-size:10px;color:#94A3B8">O Presidente clica em Aprovar diretamente. Um protocolo com data e hora é gerado automaticamente e fica registrado nos Aprovados.</div>
+      </div>
+      <button class="bsend" style="margin-top:0;padding:10px" onclick="salvarConfigs()">Salvar configurações</button>
     </div>
   </div>
-</div>
+  <div class="card">
+    <div class="card-hd"><span class="cht">🗑️ Limpeza do banco</span></div>
+    <div style="padding:.85rem 1.1rem;display:flex;flex-direction:column;gap:9px">
+      <button class="brv" style="padding:11px;font-size:13px;font-weight:700" onclick="adminLimpar('pendente')">🧹 Limpar Pendentes</button>
+      <button class="brv" style="padding:11px;font-size:13px;font-weight:700;background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.3)" onclick="adminLimpar('aprovado')">🧹 Limpar Aprovados</button>
+      <button class="bre" style="padding:11px;font-size:13px;font-weight:700" onclick="adminReset()">⚠️ Reset Geral — Zerar tudo</button>
+    </div>
+  </div>
 
 <!-- CONFIRM -->
 <div class="conf-ov" id="conf-ov" onclick="fConf(event)">
@@ -966,6 +1021,9 @@ var FORN=[{"nome": "LOGNET", "area": "Materiais de TI e automação", "vendedor"
 var sb=null;
 var _aprovTodos=[];
 var _cAcao='',_cSolId='',_cDesc='';
+// Perfil do usuário — admin por padrão (sem auth ainda)
+var EU_PERFIL='admin';
+var EU_NOME='Ricardo';
 
 // INIT
 var LOCAL_DATA = {solicitacoes:[], cotacoes:[], decisoes:[]};
@@ -1046,11 +1104,12 @@ function pBR(s){return parseFloat((s||'').replace(/\./g,'').replace(',','.'))||0
 function gId(){return 'SOL-'+Date.now().toString().slice(-6)+'-'+Math.random().toString(36).slice(2,4).toUpperCase();}
 function agora(){var d=new Date();return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
 function fData(iso){if(!iso)return '';try{return new Date(iso).toLocaleDateString('pt-BR');}catch(e){return '';}}
+function fDataHora(iso){if(!iso)return '';try{return new Date(iso).toLocaleString('pt-BR',{timeZone:'America/Recife',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});}catch(e){return fData(iso);}}
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 // ABAS
 function irAba(id,el){
-  ['dash','pend','aprov','nova','admin'].forEach(function(a){
+  ['dash','pend','aprov','rev','nova','admin'].forEach(function(a){
     var d=document.getElementById('aba-'+a);
     if(d) d.style.display=a===id?'block':'none';
   });
@@ -1059,6 +1118,7 @@ function irAba(id,el){
   if(id==='dash') carregarDash();
   if(id==='pend') carregarPend();
   if(id==='aprov') carregarAprov();
+  if(id==='rev') carregarRev();
 }
 
 // PERÍODO
@@ -1076,22 +1136,52 @@ function setPeriodo(dias){
 // DASHBOARD
 async function carregarDash(){
   if(!sb || MODO_LOCAL){
-    // Modo demo com dados locais
-    document.getElementById('d-eco').textContent = fBR(LOCAL_DATA.eco||0);
-    document.getElementById('d-eco-sub').textContent = (LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='aprovado'||s.status==='auto-aprovado';}).length)+' aprovadas';
-    document.getElementById('d-taxa').textContent = '—%';
-    document.getElementById('d-aprov').textContent = LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='aprovado'||s.status==='auto-aprovado';}).length;
-    document.getElementById('d-aprov-v').textContent = '—';
-    document.getElementById('d-pend').textContent = LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='pendente';}).length;
-    document.getElementById('d-pend-v').textContent = '—';
-    document.getElementById('d-auto').textContent = LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='auto-aprovado';}).length;
-    document.getElementById('d-ticket').textContent = '—';
-    document.getElementById('d-mes').textContent = '—';
-    document.getElementById('d-rej').textContent = LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='rejeitado';}).length;
-    document.getElementById('d-rev').textContent = '—';
-    document.getElementById('cnt-p').textContent = LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='pendente';}).length;
-    document.getElementById('bar-areas').innerHTML = '<div class="empty-msg">Conecte via servidor para ver dados reais.</div>';
-    document.getElementById('bar-forns').innerHTML = '<div class="empty-msg">Conecte via servidor para ver dados reais.</div>';
+    var ini0=document.getElementById('dt-ini').value;
+    var fim0=document.getElementById('dt-fim').value;
+    var data0=LOCAL_DATA.solicitacoes.filter(function(s){
+      if(!s.criado_em)return true;
+      var dt=s.criado_em.slice(0,10);
+      if(ini0&&dt<ini0)return false;
+      if(fim0&&dt>fim0)return false;
+      return true;
+    });
+    var aprov0=data0.filter(function(s){return s.status==='aprovado'||s.status==='auto-aprovado';});
+    var pend0=data0.filter(function(s){return s.status==='pendente';});
+    var rej0=data0.filter(function(s){return s.status==='rejeitado';});
+    var rev0=data0.filter(function(s){return s.status==='revisao';});
+    var auto0=data0.filter(function(s){return s.status==='auto-aprovado';});
+    var eco0=aprov0.reduce(function(a,s){return a+(Number(s.economia)||0);},0);
+    var aprovV0=aprov0.reduce(function(a,s){return a+(Number(s.menor_valor)||0);},0);
+    var pendV0=pend0.reduce(function(a,s){return a+(Number(s.menor_valor)||0);},0);
+    var ticket0=aprov0.length?aprovV0/aprov0.length:0;
+    var taxa0=data0.length?Math.round(aprov0.length/data0.length*100):0;
+    var now0=new Date();
+    var mes0=LOCAL_DATA.solicitacoes.filter(function(s){var dt=new Date(s.criado_em||'');return dt.getMonth()===now0.getMonth()&&dt.getFullYear()===now0.getFullYear();}).length;
+    document.getElementById('d-eco').textContent=fBR(eco0);
+    document.getElementById('d-eco-sub').textContent=aprov0.length+' compras aprovadas no período';
+    document.getElementById('d-taxa').textContent=taxa0+'%';
+    document.getElementById('d-aprov').textContent=aprov0.length;
+    document.getElementById('d-aprov-v').textContent=fBRk(aprovV0)+' aprovado';
+    document.getElementById('d-pend').textContent=pend0.length;
+    document.getElementById('d-pend-v').textContent=fBRk(pendV0)+' em espera';
+    document.getElementById('d-auto').textContent=auto0.length;
+    document.getElementById('d-ticket').textContent=fBRk(ticket0);
+    document.getElementById('d-mes').textContent=mes0;
+    document.getElementById('d-rej').textContent=rej0.length;
+    document.getElementById('d-rev').textContent=rev0.length;
+    document.getElementById('cnt-p').textContent=pend0.length;
+    var crev0=LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='revisao';}).length;
+    var cr0=document.getElementById('cnt-rev'); if(cr0) cr0.textContent=crev0;
+    var ini2a=ini0?ini0.slice(5).split('-').reverse().join('/'):'';;
+    var fim2a=fim0?fim0.slice(5).split('-').reverse().join('/'):'';;
+    document.getElementById('d-per').textContent=ini2a+'–'+fim2a;
+    var areas0={},forns0={};
+    aprov0.forEach(function(s){
+      var a=s.area||'Outros'; areas0[a]=(areas0[a]||0)+(Number(s.economia)||0);
+      var f=s.menor_fornecedor||'Outros'; forns0[f]=(forns0[f]||0)+(Number(s.menor_valor)||0);
+    });
+    rBarras('bar-areas',areas0,'#16A34A');
+    rBarras('bar-forns',forns0,'#2563EB');
     return;
   }
   var ini=document.getElementById('dt-ini').value;
@@ -1126,6 +1216,8 @@ async function carregarDash(){
   document.getElementById('d-rej').textContent=rej.length;
   document.getElementById('d-rev').textContent=rev.length;
   document.getElementById('cnt-p').textContent=pend.length;
+  var crev=data.filter(function(d){return d.status==='revisao';}).length;
+  var crEl=document.getElementById('cnt-rev'); if(crEl) crEl.textContent=crev;
   var ini2=ini?ini.slice(5).split('-').reverse().join('/'):'';
   var fim2=fim?fim.slice(5).split('-').reverse().join('/'):'';
   document.getElementById('d-per').textContent=ini2+'–'+fim2;
@@ -1227,7 +1319,9 @@ function rLista(contId,data,tipo){
       +'<div class="sc-desc">'+esc(s.descricao||'')+'</div>'
       +'<div class="sc-meta"><span>🏢 '+esc(s.area||'—')+'</span>'
       +(s.destino?'<span>📍 '+esc(s.destino)+'</span>':'')
-      +'<span>👤 '+esc(s.solicitante||'')+'</span></div></div>'
+      +'<span>👤 '+esc(s.solicitante||'')+'</span></div>'
+      +(s.protocolo&&tipo==='aprov'?'<div style="font-size:9px;color:#60A5FA;font-weight:700;margin-top:2px">📋 '+esc(s.protocolo)+' · ✅ '+fDataHora(s.decidido_em)+'</div>':'')
+      +'</div>'
       +'<div><div class="sc-val">'+fBRk(mn)+'</div>'
       +(eco>0?'<div class="sc-eco">Econ. '+fBRk(eco)+'</div>':'')
       +'<div style="margin-top:4px">'+pillHtml+'</div></div></div>'
@@ -1241,12 +1335,15 @@ function rLista(contId,data,tipo){
 
     // Detalhe
     var cotRows='';
+    // Enriquecer cotações com blobs em memória se pdf_url ausente
+    cots.forEach(function(c,ci){if(!c.pdf_url&&_pdfBlobs[s.id+'_'+ci]) c.pdf_url=_pdfBlobs[s.id+'_'+ci];});
     cots.forEach(function(c){
       var isMin=Number(c.valor)===mn;
       var isMax=Number(c.valor)===mx&&cots.length>1;
-      var pdfHtml=c.pdf_url
-        ?'<a class="pdf-cot" href="'+esc(c.pdf_url)+'" target="_blank" onclick="event.stopPropagation()">📄 PDF</a>'
-        :'<span style="color:#E2E8F0;font-size:9px">—</span>';
+      var pdfUrl=c.pdf_url||'';
+      var pdfHtml=pdfUrl
+        ?'<button class="pdf-cot" onclick="event.stopPropagation();abrirPDFModal([\''+pdfUrl.replace(/'/g,'%27')+'\'])" title="Ver orçamento">👁 Ver</button>'
+        :'<span style="color:#475569;font-size:9px;font-style:italic">sem anexo</span>';
       cotRows+='<tr class="'+(isMin?'ct-mn':'')+'"><td>'+(isMin?'<span class="bmn">✓</span> ':'')
         +esc(c.fornecedor||'')+'</td>'
         +'<td><strong>'+fBR(c.valor)+'</strong></td>'
@@ -1258,13 +1355,14 @@ function rLista(contId,data,tipo){
     var pdfs=cots.filter(function(c){return c.pdf_url;});
     var pdfPack='';
     if(pdfs.length){
-      var urls=JSON.stringify(pdfs.map(function(c){return c.pdf_url;}));
+      var _pdfId='pdf_'+s.id.replace(/[^a-z0-9]/gi,'_');
+      window[_pdfId]=pdfs.map(function(c){return c.pdf_url;});
       pdfPack='<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:var(--rs);'
         +'padding:8px 12px;margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
         +'<span style="font-size:12px;font-weight:600;color:#1D4ED8">📦 '+pdfs.length+' PDF(s)</span>'
         +'<button style="background:#2563EB;color:#fff;border:none;border-radius:6px;padding:5px 12px;'
         +'font-size:11px;font-weight:700;cursor:pointer;font-family:inherit" '
-        +'onclick="event.stopPropagation();abrPDFs('+esc(urls)+')">Ver todos</button></div>';
+        +'onclick="event.stopPropagation();abrPDFs(window.'+_pdfId+')">👁 Ver PDFs</button></div>';
     }
 
     var btnsHtml='';
@@ -1296,7 +1394,9 @@ function rLista(contId,data,tipo){
       +(s.categoria?'<div class="ir"><span class="il">Categoria</span><span class="iv">'+esc(s.categoria)+'</span></div>':'')
       +(s.destino?'<div class="ir"><span class="il">Destino</span><span class="iv">'+esc(s.destino)+'</span></div>':'')
       +(s.justificativa?'<div class="ir"><span class="il">Justificativa</span><span class="iv">'+esc(s.justificativa)+'</span></div>':'')
-      +(s.decidido_em?'<div class="ir"><span class="il">Decidido em</span><span class="iv">'+fData(s.decidido_em)+'</span></div>':'')
+      +(s.decidido_em?'<div class="ir"><span class="il">Decidido em</span><span class="iv" style="color:var(--vd);font-weight:700">'+fDataHora(s.decidido_em)+'</span></div>':'')
+      +(s.decidido_por?'<div class="ir"><span class="il">Aprovado por</span><span class="iv" style="color:var(--vd);font-weight:700">👤 '+esc(s.decidido_por)+'</span></div>':'')
+      +(s.protocolo?'<div class="ir"><span class="il">Protocolo</span><span class="iv"><strong style="color:var(--az2);letter-spacing:.5px">📋 '+esc(s.protocolo)+'</strong></span></div>':'')
       +(s.observacao?'<div class="ir"><span class="il">Obs.</span><span class="iv">'+esc(s.observacao)+'</span></div>':'')
       +'<table class="ct"><thead><tr><th>Fornecedor</th><th>Valor</th><th>Prazo</th><th></th><th>PDF</th></tr></thead>'
       +'<tbody>'+cotRows+'</tbody></table>'
@@ -1319,9 +1419,28 @@ function tgDet(id){
   if(!on){d.classList.add('on');setTimeout(function(){d.scrollIntoView({behavior:'smooth',block:'nearest'});},80);}
 }
 
-function abrPDFs(urls){urls.forEach(function(u,i){setTimeout(function(){window.open(u,'_blank');},i*400);});}
+function abrPDFs(urls){abrirPDFModal(urls);}
 
 // FORNECEDOR INFO
+function onFCCustom(i){
+  // Quando digita no campo livre, limpa o select e mostra nome no info
+  var custom=(document.getElementById('fn'+i+'_custom').value||'').trim();
+  if(custom){
+    document.getElementById('fn'+i).value='';
+    document.getElementById('fi'+i).innerHTML='<span style="color:rgba(255,255,255,.6)">✏️ Novo fornecedor</span>';
+  } else {
+    document.getElementById('fi'+i).innerHTML='';
+  }
+  rc();
+}
+
+// Retorna nome do fornecedor (select ou campo livre)
+function getFornNome(i){
+  var custom=(document.getElementById('fn'+i+'_custom')||{value:''}).value.trim();
+  if(custom) return custom;
+  return (document.getElementById('fn'+i)||{value:''}).value;
+}
+
 function onFC(i){
   var nome=document.getElementById('fn'+i).value;
   var f=FORN.find(function(x){return x.nome===nome;});
@@ -1350,9 +1469,18 @@ function rc(){
   document.getElementById('al5k').style.display=mn>LIMITE?'flex':'none';
 }
 
+// Mapa de blob URLs dos PDFs selecionados (por índice de cotação)
+var _pdfBlobs = {};
+
 function mkP(i){
   var inp=document.getElementById('pf'+i),lbl=document.getElementById('pu'+i);
-  if(inp.files&&inp.files[0]){lbl.classList.add('ok');lbl.childNodes[0].textContent='✅ '+inp.files[0].name.slice(0,14);}
+  if(inp.files&&inp.files[0]){
+    lbl.classList.add('ok');
+    lbl.childNodes[0].textContent='✅ '+inp.files[0].name.slice(0,14);
+    // Criar blob URL para preview imediato
+    if(_pdfBlobs[i]) URL.revokeObjectURL(_pdfBlobs[i]);
+    _pdfBlobs[i]=URL.createObjectURL(inp.files[0]);
+  }
 }
 
 // ENVIAR
@@ -1364,9 +1492,9 @@ async function enviar(){
   var sol=(document.getElementById('n-sol').value||'Comprador').trim();
   var cots=[];
   for(var i=0;i<3;i++){
-    var fn=(document.getElementById('fn'+i).value||'').trim();
+    var fn=getFornNome(i);
     var vl=pBR(document.getElementById('vl'+i).value);
-    if(fn&&vl>0) cots.push({fornecedor:fn,valor:vl,prazo:(document.getElementById('pr'+i).value||'').trim(),pdf_url:null,_f:document.getElementById('pf'+i).files[0]||null});
+    if(fn&&vl>0) cots.push({fornecedor:fn,valor:vl,prazo:(document.getElementById('pr'+i).value||'').trim(),pdf_url:null,_f:document.getElementById('pf'+i).files[0]||null,_blobIdx:i});
   }
   if(cots.length<2){alert('Informe pelo menos 2 cotações.');return;}
   var mn=Math.min.apply(null,cots.map(function(c){return c.valor;}));
@@ -1376,6 +1504,8 @@ async function enviar(){
   var id=gId();
   var btn=document.getElementById('btn-env');
   btn.innerHTML='<div class="spin"></div> Salvando...';btn.disabled=true;
+  // Se estiver editando uma solicitação em revisão, atualizar status para pendente
+  var isEdicao=window._editandoId||null;
   try{
     if(MODO_LOCAL){
       var s2 = {id:id,descricao:desc,area:area,
@@ -1386,8 +1516,11 @@ async function enviar(){
         economia:mx-mn,menor_fornecedor:mc.fornecedor,
         criado_em:new Date().toISOString()};
       LOCAL_DATA.solicitacoes.push(s2);
-      cots.forEach(function(c){
-        LOCAL_DATA.cotacoes.push({solicitacao_id:id,fornecedor:c.fornecedor,valor:c.valor,prazo:c.prazo,pdf_url:null});
+      cots.forEach(function(c,ci){
+        var bUrl=_pdfBlobs[c._blobIdx!=null?c._blobIdx:ci]||null;
+        // Guardar com chave acessível depois: id_ci
+        if(bUrl) _pdfBlobs[id+'_'+ci]=bUrl;
+        LOCAL_DATA.cotacoes.push({solicitacao_id:id,fornecedor:c.fornecedor,valor:c.valor,prazo:c.prazo,pdf_url:bUrl});
       });
       if(status==='auto-aprovado'){
         LOCAL_DATA.eco = (LOCAL_DATA.eco||0)+(mx-mn);
@@ -1406,8 +1539,8 @@ async function enviar(){
     if(r.error) throw new Error(r.error.message);
     for(var j=0;j<cots.length;j++){
       if(cots[j]._f){
-        var up=await sb.storage.from('cotacoes-pdfs').upload(id+'/'+j+'_'+cots[j]._f.name,cots[j]._f,{upsert:true});
-        if(!up.error) cots[j].pdf_url=sb.storage.from('cotacoes-pdfs').getPublicUrl(id+'/'+j+'_'+cots[j]._f.name).data.publicUrl;
+        var up=await sb.storage.from('COTACOES-PDFS').upload(id+'/'+j+'_'+cots[j]._f.name,cots[j]._f,{upsert:true});
+        if(!up.error) cots[j].pdf_url=sb.storage.from('COTACOES-PDFS').getPublicUrl(id+'/'+j+'_'+cots[j]._f.name).data.publicUrl;
       }
     }
     await sb.from('cotacoes').insert(cots.map(function(c){return {solicitacao_id:id,fornecedor:c.fornecedor,valor:c.valor,prazo:c.prazo,pdf_url:c.pdf_url};}));
@@ -1435,6 +1568,8 @@ async function enviar(){
       ' Presidencia notificada via WhatsApp.');
 }
     limpar();
+    window._editandoId=null;
+    document.getElementById('btn-env').textContent='Enviar solicitação →';
     document.getElementById('cnt-p').textContent=Number(document.getElementById('cnt-p').textContent||0)+(status==='pendente'?1:0);
   }catch(e){alert('Erro ao salvar: '+e.message);}
   btn.innerHTML='Enviar solicitação →';btn.disabled=false;
@@ -1444,6 +1579,7 @@ function limpar(){
   ['n-sol','n-area','n-cat','n-dest','n-desc','n-just'].forEach(function(x){var e=document.getElementById(x);if(e)e.value='';});
   for(var i=0;i<3;i++){
     ['fn','vl','pr'].forEach(function(p){var e=document.getElementById(p+i);if(e)e.value='';});
+    var cust=document.getElementById('fn'+i+'_custom');if(cust)cust.value='';
     document.getElementById('cc'+i).classList.remove('mn');
     document.getElementById('fi'+i).innerHTML='';
     var pu=document.getElementById('pu'+i);pu.className='pdf-u';pu.childNodes[0].textContent='📎 PDF';
@@ -1496,21 +1632,21 @@ function lerXLS(inp){
 // DECISÃO
 function abrConf(acao,id,desc,val,forn){
   _cAcao=acao;_cSolId=id;_cDesc=desc;
-  var t={aprovar:'Confirmar aprovação?',rejeitar:'Confirmar rejeição?',revisar:'Solicitar revisão?'};
+  var t={
+    aprovar:'✅ Confirmar aprovação',
+    rejeitar:'❌ Confirmar rejeição',
+    revisar:'🔄 Solicitar revisão'
+  };
   var d={
-  aprovar:
-    id+'\n'+desc+'\nFornecedor: '+(forn||'-')+' - '+val,
-
-  rejeitar:
-    id+'\n'+desc+'\n\nComprador será notificado.',
-
-  revisar:
-    id+'\n'+desc+'\n\nNovas cotações serão solicitadas.'
-};
-  var cor={aprovar:'var(--vd)',rejeitar:'var(--vm)',revisar:'var(--az3)'};
+    aprovar: desc+'\n\n'+(forn?'Fornecedor: '+forn+'\n':'')+'Valor: '+val+'\n\nAo confirmar, um protocolo será gerado com data e hora.',
+    rejeitar: desc+'\n\nO comprador será notificado para rever as cotações.',
+    revisar: desc+'\n\nO comprador será notificado para enviar novas cotações.'
+  };
+  var cor={aprovar:'#16a34a',rejeitar:'var(--vm)',revisar:'var(--az3)'};
   document.getElementById('conf-t').textContent=t[acao];
   document.getElementById('conf-d').textContent=d[acao];
   document.getElementById('conf-ok').style.background=cor[acao];
+  document.getElementById('conf-ok').textContent={aprovar:'✅ Aprovar',rejeitar:'❌ Rejeitar',revisar:'🔄 Revisar'}[acao];
   document.getElementById('conf-ov').classList.add('on');
 }
 function fConf(e){if(e&&e.target!==document.getElementById('conf-ov'))return;document.getElementById('conf-ov').classList.remove('on');}
@@ -1518,46 +1654,77 @@ async function confAcao(){
   document.getElementById('conf-ov').classList.remove('on');
   var obs=(document.getElementById('obs-'+_cSolId)||{}).value||'';
   var ns={aprovar:'aprovado',rejeitar:'rejeitado',revisar:'revisao'}[_cAcao];
+  var agora_iso=new Date().toISOString();
+  var agora_br=new Date().toLocaleString('pt-BR',{timeZone:'America/Recife',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  // Gerar número de protocolo único para aprovações
+  var protocolo=ns==='aprovado'?('PROT-'+Date.now().toString().slice(-8)):'';
   if(MODO_LOCAL){
-    var sol2 = LOCAL_DATA.solicitacoes.find(function(s){return s.id===_cSolId;});
-    if(sol2){sol2.status=ns;sol2.observacao=obs;sol2.decidido_em=new Date().toISOString();}
+    var sol2=LOCAL_DATA.solicitacoes.find(function(s){return s.id===_cSolId;});
+    if(sol2){
+      sol2.status=ns;
+      sol2.observacao=obs;
+      sol2.decidido_em=agora_iso;
+      sol2.decidido_por='Paulo (Presidente)';
+      if(protocolo) sol2.protocolo=protocolo;
+    }
     if(ns==='aprovado') LOCAL_DATA.eco=(LOCAL_DATA.eco||0)+(sol2?Number(sol2.economia)||0:0);
   } else {
-    await sb.from('solicitacoes').update({status:ns,observacao:obs,decidido_em:new Date().toISOString()}).eq('id',_cSolId);
-    await sb.from('decisoes').insert({solicitacao_id:_cSolId,acao:ns,observacao:obs});
+    var upd={status:ns,observacao:obs,decidido_em:agora_iso,decidido_por:'Paulo (Presidente)'};
+    if(protocolo) upd.protocolo=protocolo;
+    await sb.from('solicitacoes').update(upd).eq('id',_cSolId);
+    await sb.from('decisoes').insert({solicitacao_id:_cSolId,acao:ns,observacao:obs,decidido_por:'Paulo (Presidente)',decidido_em:agora_iso});
   }
   var icos={aprovar:'✅',rejeitar:'❌',revisar:'🔄'};
-  suc(icos[_cAcao],{aprovar:'Aprovado',rejeitar:'Rejeitado',revisar:'Revisão solicitada'}[_cAcao],_cDesc+'\n\nRegistrado em '+agora()+'.');
+  var msgs={
+    aprovar:'Aprovado com sucesso!\n\n'+_cDesc+'\n\n📋 Protocolo: '+protocolo+'\n🕐 '+agora_br+'\n👤 Paulo (Presidente)',
+    rejeitar:'Solicitação rejeitada.\n\n'+_cDesc+'\n\n🕐 '+agora_br,
+    revisar:'Revisão solicitada.\n\n'+_cDesc+'\n\n🕐 '+agora_br
+  };
+  suc(icos[_cAcao],{aprovar:'✅ Aprovado',rejeitar:'❌ Rejeitado',revisar:'🔄 Revisão solicitada'}[_cAcao],msgs[_cAcao]);
   await carregarPend();await carregarDash();
+  if(document.getElementById('aba-rev')&&document.getElementById('aba-rev').style.display!=='none') await carregarRev();
 }
 
 // WA
 async function reenvWA(solId){
-  if(!sb)return;
-  var r=await sb.from('solicitacoes').select('*,cotacoes(*)').eq('id',solId).single();
-  var s=r.data;if(!s)return;
-  var mn=Number(s.menor_valor)||0;
-  var txt='';
-  (s.cotacoes||[]).forEach(function(c){
-  txt += (Number(c.valor)===mn ? '✅ ' : '• ')
-       + c.fornecedor
-       + ': '
-       + fBR(c.valor)
-       + (Number(c.valor)===mn ? ' ← menor' : '')
-       + '\n';
-});
-  var link='https://compras-esposende.vercel.app';
-  var msg =
-'🛒 *APROVAÇÃO DE COMPRA — ESPOSENDE*\n\n' +
-'Solicitação: *#' + solId + '*\n' +
-'Item: ' + s.descricao + '\n' +
-'Solicitante: ' + s.solicitante + ' (' + s.area + ')\n\n' +
-'📊 *Cotações:*\n' +
-txt + '\n\n' +
-'💰 Economia: *' + fBR(Number(s.economia)||0) + '*\n\n' +
-'👇 Aprovar:\n' +
-link;
   var tel=((document.getElementById('cfg-wa')||{}).value||WA_TEL).replace(/\D/g,'');
+  var s=null;
+  if(MODO_LOCAL){
+    s=LOCAL_DATA.solicitacoes.find(function(x){return x.id===solId;});
+    if(s){
+      var cots2=LOCAL_DATA.cotacoes.filter(function(c){return c.solicitacao_id===solId;});
+      s=Object.assign({},s,{cotacoes:cots2});
+    }
+  } else {
+    if(!sb)return;
+    var r=await sb.from('solicitacoes').select('*,cotacoes(*)').eq('id',solId).single();
+    s=r.data;
+  }
+  if(!s){alert('Solicitação não encontrada.');return;}
+  var mn=Number(s.menor_valor)||0;
+  var eco=Number(s.economia)||0;
+  var cots=(s.cotacoes||[]).slice().sort(function(a,b){return Number(a.valor)-Number(b.valor);});
+
+  // Linhas de cotação — menor destacada
+  var cotLines=cots.map(function(c){
+    var isMin=Number(c.valor)===mn;
+    return (isMin?'✅ *'+c.fornecedor+': '+fBR(c.valor)+'* ← melhor':'   '+c.fornecedor+': '+fBR(c.valor));
+  }).join('\n');
+
+  var link='https://compras-esposende.vercel.app';
+
+  var msg=
+'🏪 *Esposende — Aprovação de Compra*\n'
++'#'+solId+'\n\n'
++'*'+( s.descricao||'' )+'*\n'
++( s.area?'Área: '+(s.area||'')+'\n':'' )
++( s.solicitante?'Solicitante: '+(s.solicitante||'')+'\n':'' )
++'\n'
++cotLines+'\n\n'
++'💰 Economia gerada: *'+fBR(eco)+'*\n\n'
++'👉 '+link+'/pendentes\n'
++'Solicitação: *#'+solId+'*';
+
   window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg),'_blank');
 }
 
@@ -1621,6 +1788,448 @@ if(window.sb){
   var _fromOrig=sb.from.bind(sb);
   // Não é possível fazer monkey-patch fácil no supabase client
   // Os campos extras serão salvos via update após insert
+}
+
+function salvarConfigs(){
+  var lim=document.getElementById('cfg-limite');
+  if(lim) LIMITE=Number(lim.value)||5000;
+  var wa=(document.getElementById('cfg-wa')||{value:WA_TEL}).value||WA_TEL;
+  WA_TEL=wa;
+  try{
+    localStorage.setItem('esp_limite', LIMITE);
+    localStorage.setItem('esp_wa', wa);
+  }catch(e){}
+  suc('✅','Configurações salvas','Limite auto-aprovação: R$ '+LIMITE.toLocaleString('pt-BR')+'\nWhatsApp: '+wa+'\nAlterações aplicadas.');
+}
+// Carregar configs salvas ao iniciar
+(function(){
+  try{
+    var l=localStorage.getItem('esp_limite'); if(l) LIMITE=Number(l);
+    var w=localStorage.getItem('esp_wa');
+    if(w){ var el=document.getElementById('cfg-wa'); if(el) el.value=w; WA_TEL=w; }
+    if(document.getElementById('cfg-limite')) document.getElementById('cfg-limite').value=LIMITE;
+  }catch(e){}
+})();
+
+
+var _kpiData=[];
+
+// ===== ABA REVISÃO =====
+async function carregarRev(){
+  var data=[];
+  if(!MODO_LOCAL&&sb){
+    var r=await sb.from('solicitacoes').select('*,cotacoes(*)').eq('status','revisao').order('criado_em',{ascending:true});
+    data=r.data||[];
+  } else {
+    var all=LOCAL_DATA.solicitacoes.filter(function(s){return s.status==='revisao';});
+    data=all.map(function(s){return Object.assign({},s,{cotacoes:LOCAL_DATA.cotacoes.filter(function(c){return c.solicitacao_id===s.id;})});});
+  }
+  var cnt=document.getElementById('cnt-rev'); if(cnt) cnt.textContent=data.length;
+  document.getElementById('kr-n').textContent=data.length;
+  var total=data.reduce(function(a,s){return a+(Number(s.menor_valor)||0);},0);
+  document.getElementById('kr-val').textContent=data.length?fBRk(total):'—';
+  if(data.length){
+    var mais=data[0];
+    var dias=Math.floor((Date.now()-new Date(mais.criado_em||Date.now()))/(86400000));
+    document.getElementById('kr-dias').textContent=dias+'d atrás';
+  } else { document.getElementById('kr-dias').textContent='—'; }
+  rListaRev('lista-rev',data);
+}
+
+function rListaRev(contId,data){
+  var cont=document.getElementById(contId);
+  if(!data.length){cont.innerHTML='<div class="empty-msg">Nenhuma solicitação em revisão.</div>';return;}
+  cont.innerHTML='';
+  data.forEach(function(s){
+    var mn=Number(s.menor_valor)||0;
+    var cots=s.cotacoes||[];
+    var dias=Math.floor((Date.now()-new Date(s.criado_em||Date.now()))/(86400000));
+    var urgCor=dias>7?'#ef4444':dias>3?'#f59e0b':'#94a3b8';
+    var cotRows='';
+    cots.forEach(function(c){
+      var isMin=Number(c.valor)===mn;
+      var pdfBtn=c.pdf_url
+        ?'<button onclick="event.stopPropagation();abrirPDFModal([\''+esc(c.pdf_url)+'\'])" style="background:#2563EB;color:#fff;border:none;border-radius:5px;padding:2px 8px;font-size:9px;font-weight:700;cursor:pointer">👁 Ver</button>'
+        :'<span style="color:#64748B;font-size:9px">—</span>';
+      cotRows+='<tr class="'+(isMin?'ct-mn':'')+'">'
+        +'<td style="font-size:10px">'+(isMin?'<span class="bmn">✓</span> ':'')+esc(c.fornecedor||'')+'</td>'
+        +'<td style="font-size:10px;font-weight:700">'+fBR(c.valor)+'</td>'
+        +'<td style="font-size:9px">'+esc(c.prazo||'—')+'</td>'
+        +'<td>'+pdfBtn+'</td>'
+        +'</tr>';
+    });
+    var card=document.createElement('div');
+    card.className='sc';
+    card.style.borderLeft='4px solid #F59E0B';
+    card.innerHTML=
+      '<div class="sc-hd">'
+      +'<div><div class="sc-id">'+esc(s.id||'')+' · '+fData(s.criado_em)
+        +' <span style="color:'+urgCor+';font-weight:700">· '+dias+'d em revisão</span></div>'
+      +'<div class="sc-desc">'+esc(s.descricao||'')+'</div>'
+      +'<div class="sc-meta"><span>🏢 '+esc(s.area||'—')+'</span><span>👤 '+esc(s.solicitante||'—')+'</span></div>'
+      +(s.observacao?'<div style="font-size:10px;color:#FCA5A5;margin-top:4px;padding:5px 8px;background:rgba(239,68,68,.1);border-radius:6px">💬 Motivo revisão: '+esc(s.observacao)+'</div>':'')
+      +'</div>'
+      +'<div><div class="sc-val">'+fBRk(mn)+'</div><span class="pill pp">🔄 Revisão</span></div>'
+      +'</div>'
+      +'<div style="padding:0 .9rem .85rem">'
+        +(cots.length?'<table class="ct"><thead><tr><th>Fornecedor</th><th>Valor</th><th>Prazo</th><th>PDF</th></tr></thead><tbody>'+cotRows+'</tbody></table>':'')
+        +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px">'
+          +'<button class="bap" style="font-size:12px;padding:10px" onclick="event.stopPropagation();editarSolicitacao(\''+s.id+'\')">✏️ Editar e Reenviar</button>'
+          +'<button class="bre" style="font-size:12px;padding:10px" onclick="event.stopPropagation();abrConf(\'rejeitar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">❌ Rejeitar</button>'
+        +'</div>'
+        +'<button class="brv" style="width:100%;margin-top:7px;padding:10px;font-size:12px;background:#2563EB;color:#fff" onclick="event.stopPropagation();reenvWA(\''+s.id+'\')">📲 Reenviar ao Presidente via WhatsApp</button>'
+      +'</div>';
+    cont.appendChild(card);
+  });
+}
+
+async function kpiDrill(tipo){
+  var data=[];
+  if(!MODO_LOCAL&&sb){
+    var q=sb.from('solicitacoes').select('*,cotacoes(*)');
+    if(tipo==='rej') q=q.eq('status','rejeitado');
+    else if(tipo==='rev') q=q.eq('status','revisao');
+    else if(tipo==='aprov') q=q.in('status',['aprovado','auto-aprovado']);
+    else if(tipo==='auto') q=q.eq('status','auto-aprovado');
+    else {
+      var now=new Date();
+      var ini=new Date(now.getFullYear(),now.getMonth(),1).toISOString();
+      q=q.gte('criado_em',ini);
+    }
+    var r=await q.order('criado_em',{ascending:false});
+    data=r.data||[];
+  } else {
+    data=LOCAL_DATA.solicitacoes.filter(function(s){
+      if(tipo==='rej') return s.status==='rejeitado';
+      if(tipo==='rev') return s.status==='revisao';
+      if(tipo==='aprov') return s.status==='aprovado'||s.status==='auto-aprovado';
+      if(tipo==='auto') return s.status==='auto-aprovado';
+      var now=new Date();
+      var dt=new Date(s.criado_em||'');
+      return dt.getMonth()===now.getMonth()&&dt.getFullYear()===now.getFullYear();
+    });
+  }
+  var tits={rej:'❌ Rejeitadas',rev:'🔄 Em Revisão',mes:'📅 Este Mês',aprov:'✅ Aprovadas',auto:'⚡ Auto-aprovadas'};
+  document.getElementById('kpi-modal-title').textContent=(tits[tipo]||'')+'  ('+data.length+')';
+  var body=document.getElementById('kpi-modal-body');
+  if(!data.length){body.innerHTML='<div class="empty-msg" style="color:#94A3B8">Nenhum registro.</div>';document.getElementById('kpi-modal').style.display='flex';return;}
+  var html='';
+  data.forEach(function(s){
+    var cots=s.cotacoes||[];
+    var mn=Number(s.menor_valor)||0;
+    var pill={rejeitado:'<span class="pill pr">❌ Rejeitado</span>',revisao:'<span class="pill pp">🔄 Revisão</span>',pendente:'<span class="pill pp">⏳ Pendente</span>',aprovado:'<span class="pill pa">✅ Aprovado</span>','auto-aprovado':'<span class="pill pau">⚡ Auto</span>'}[s.status]||'';
+    html+='<div style="background:rgba(255,255,255,.06);border-radius:10px;padding:10px 12px;margin-bottom:8px;border:1px solid rgba(255,255,255,.1)">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+      +'<div style="flex:1"><div style="font-size:9px;color:#94A3B8;font-weight:700;letter-spacing:.4px">'+esc(s.id||'')+'</div>'
+      +'<div style="font-size:13px;font-weight:600;color:#fff;margin:2px 0">'+esc(s.descricao||'')+'</div>'
+      +'<div style="font-size:10px;color:#CBD5E1">🏢 '+esc(s.area||'—')+' · 👤 '+esc(s.solicitante||'—')+'</div>'
+      +(s.observacao?'<div style="font-size:10px;color:#FCA5A5;margin-top:3px;padding:3px 6px;background:rgba(239,68,68,.1);border-radius:4px">Obs: '+esc(s.observacao)+'</div>':'')
+      +'</div>'
+      +'<div style="text-align:right;flex-shrink:0">'+pill
+      +'<div style="font-size:15px;font-weight:800;color:#3B82F6;margin-top:4px">'+fBRk(mn)+'</div>'
+      +'<div style="font-size:9px;color:#94A3B8">'+fData(s.criado_em)+'</div></div></div>';
+    // Cotações com PDF
+    if(cots.length){
+      html+='<div style="margin-top:7px;border-top:1px solid rgba(255,255,255,.08);padding-top:7px">';
+      cots.forEach(function(c){
+        var isMin=Number(c.valor)===mn;
+        var pdfBtn=c.pdf_url
+          ?'<button onclick="abrirPDFModal([\''+esc(c.pdf_url)+'\'])" style="background:#2563EB;color:#fff;border:none;border-radius:4px;padding:1px 7px;font-size:9px;font-weight:700;cursor:pointer;margin-left:4px">👁 PDF</button>'
+          :'';
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;padding:3px 0;color:'+(isMin?'#22c55e':'#CBD5E1')+'">'
+          +'<span>'+(isMin?'✅ ':'')+esc(c.fornecedor||'')+pdfBtn+'</span>'
+          +'<span style="font-weight:700">'+fBR(c.valor)+'</span></div>';
+      });
+      html+='</div>';
+    }
+    if(tipo==='rev'){
+      html+='<button onclick="fecharKpiModal();editarSolicitacao(\''+s.id+'\')" style="width:100%;background:#2563EB;color:#fff;border:none;border-radius:7px;padding:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:8px">✏️ Editar e Reenviar</button>';
+    }
+    html+='</div>';
+  });
+  body.innerHTML=html;
+  document.getElementById('kpi-modal').style.display='flex';
+}
+
+function fecharKpiModal(e){
+  if(e&&e.target!==document.getElementById('kpi-modal'))return;
+  document.getElementById('kpi-modal').style.display='none';
+}
+
+// ===== EDITAR SOLICITAÇÃO (revisão) =====
+async function editarSolicitacao(solId){
+  document.getElementById('kpi-modal').style.display='none';
+  var s=null;
+  if(MODO_LOCAL){
+    s=LOCAL_DATA.solicitacoes.find(function(x){return x.id===solId;});
+    if(s) s=Object.assign({},s,{cotacoes:LOCAL_DATA.cotacoes.filter(function(c){return c.solicitacao_id===solId;})});
+  } else {
+    if(!sb){alert('Sem conexão.');return;}
+    var r=await sb.from('solicitacoes').select('*,cotacoes(*)').eq('id',solId).single();
+    s=r.data;
+  }
+  if(!s){alert('Não encontrado.');return;}
+  // Preencher formulário com dados existentes
+  irAba('nova',document.getElementById('na-nova'));
+  setTimeout(function(){
+    document.getElementById('n-sol').value=s.solicitante||'';
+    document.getElementById('n-area').value=s.area||'';
+    document.getElementById('n-cat').value=s.categoria||'';
+    document.getElementById('n-dest').value=s.destino||'';
+    document.getElementById('n-desc').value=s.descricao||'';
+    document.getElementById('n-just').value=s.justificativa||'';
+    var cots=s.cotacoes||[];
+    cots.slice(0,3).forEach(function(c,i){
+      var fn=document.getElementById('fn'+i);
+      var vl=document.getElementById('vl'+i);
+      var pr=document.getElementById('pr'+i);
+      if(fn){
+        fn.value=c.fornecedor||'';
+        // Se não encontrou no select, colocar no campo livre
+        if(!fn.value&&c.fornecedor){
+          var cust=document.getElementById('fn'+i+'_custom');
+          if(cust) cust.value=c.fornecedor;
+          fn.value='';
+        }
+      }
+      if(vl) vl.value=c.valor||'';
+      if(pr) pr.value=c.prazo||'';
+      onFC(i);
+    });
+    rc();
+    // Marcar como edição — ao enviar vai deletar a antiga e criar nova
+    window._editandoId=solId;
+    document.getElementById('btn-env').textContent='✅ Salvar e Reenviar para Aprovação';
+  },200);
+}
+
+// ===== MODAL PDF VIEWER =====
+function fechPDFModal(){var m=document.getElementById('pdf-modal');if(m)m.style.display='none';}
+function abrirPDFModal(urls){
+  // Aceitar string ou array
+  if(typeof urls==='string') urls=[urls];
+  if(!urls||!urls.length){alert('Nenhum arquivo disponível.');return;}
+  urls=urls.filter(Boolean);
+  if(!urls.length){alert('Arquivo não disponível.');return;}
+
+  var modal=document.getElementById('pdf-modal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='pdf-modal';
+    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:12px';
+    modal.innerHTML=
+      '<div style="width:100%;max-width:700px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+      +'<span style="color:#fff;font-weight:700;font-size:15px" id="pdf-modal-title">📄 Orçamento / Anexo</span>'
+      +'<div style="display:flex;gap:8px;align-items:center">'
+      +'<button id="pdf-modal-dl" style="background:#2563EB;border:none;border-radius:8px;padding:5px 14px;color:#fff;font-size:11px;font-weight:700;cursor:pointer">⬇️ Baixar</button>'
+      +'<button onclick="fechPDFModal()" style="background:rgba(255,255,255,.15);border:none;border-radius:50%;width:32px;height:32px;color:#fff;font-size:16px;cursor:pointer;font-family:inherit">✕</button>'
+      +'</div></div>'
+      +'<div id="pdf-modal-tabs" style="display:flex;gap:6px;margin-bottom:10px;width:100%;max-width:700px;overflow-x:auto"></div>'
+      +'<div id="pdf-modal-viewer" style="width:100%;max-width:700px;flex:1;min-height:0;overflow:auto"></div>';
+    document.body.appendChild(modal);
+    modal.addEventListener('click',function(e){if(e.target===modal)modal.style.display='none';});
+  }
+
+  var tabs=document.getElementById('pdf-modal-tabs');
+  var viewer=document.getElementById('pdf-modal-viewer');
+  var dlBtn=document.getElementById('pdf-modal-dl');
+  tabs.innerHTML=''; viewer.innerHTML='';
+
+  function showFile(url,btn){
+    document.querySelectorAll('#pdf-modal-tabs button').forEach(function(b){b.style.background='rgba(255,255,255,.1)';b.style.borderColor='rgba(255,255,255,.2)';});
+    btn.style.background='#2563EB'; btn.style.borderColor='#2563EB';
+    viewer.innerHTML='';
+    if(dlBtn) dlBtn.onclick=function(){var a=document.createElement('a');a.href=url;a.download='orcamento';a.target='_blank';document.body.appendChild(a);a.click();document.body.removeChild(a);};
+    var wrap=document.createElement('div');
+    wrap.style.cssText='width:100%;height:calc(100vh - 170px);display:flex;flex-direction:column;gap:8px';
+    var fr=document.createElement('iframe');
+    fr.src=url;
+    fr.style.cssText='width:100%;flex:1;border:none;border-radius:8px;background:#fff';
+    var fallback=document.createElement('div');
+    fallback.style.cssText='display:none;text-align:center;padding:30px;color:#fff';
+    fallback.innerHTML='<div style="font-size:48px;margin-bottom:16px">📄</div>'
+      +'<div style="font-size:14px;margin-bottom:16px;color:#94A3B8">Clique para abrir o arquivo</div>'
+      +'<a href="'+url+'" target="_blank" style="background:#2563EB;color:#fff;text-decoration:none;border-radius:10px;padding:12px 24px;font-size:13px;font-weight:700;display:inline-block">🔗 Abrir em nova aba</a>';
+    fr.onerror=function(){fr.style.display='none';fallback.style.display='block';};
+    wrap.appendChild(fr); wrap.appendChild(fallback);
+    viewer.appendChild(wrap);
+  }
+
+  urls.forEach(function(url,i){
+    var tab=document.createElement('button');
+    tab.style.cssText='background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s';
+    tab.textContent='📄 Cotação '+(i+1);
+    (function(u,btn){tab.onclick=function(){showFile(u,btn);};})(url,tab);
+    tabs.appendChild(tab);
+  });
+
+  if(tabs.firstChild) tabs.firstChild.click();
+  modal.style.display='flex';
+}
+// Substituir abrPDFs por abrirPDFModal
+function abrPDFs(urls){abrirPDFModal(urls);}
+
+// ===== ADMIN LIMPAR =====
+async function adminLimpar(status){
+  var label={pendente:'Pendentes',aprovado:'Aprovados e Auto-aprovados'}[status];
+  if(!confirm('⚠️ Confirma exclusão de TODAS as solicitações '+label+'?\n\nEsta ação NÃO pode ser desfeita!'))return;
+  if(MODO_LOCAL){
+    LOCAL_DATA.solicitacoes=LOCAL_DATA.solicitacoes.filter(function(s){
+      if(status==='aprovado') return s.status!=='aprovado'&&s.status!=='auto-aprovado';
+      return s.status!==status;
+    });
+    suc('🗑️','Limpo!','Solicitações '+label+' removidas do modo local.');
+    carregarDash();carregarPend();carregarAprov();
+    return;
+  }
+  if(!sb){alert('Sem conexão com Supabase.');return;}
+  try{
+    var qSel=sb.from('solicitacoes').select('id');
+    if(status==='aprovado') qSel=qSel.in('status',['aprovado','auto-aprovado']);
+    else qSel=qSel.eq('status',status);
+    var rIds=await qSel;
+    if(rIds.error) throw new Error(rIds.error.message);
+    var ids=(rIds.data||[]).map(function(r){return r.id;});
+    if(!ids.length){suc('ℹ️','Nada a excluir','Não há solicitações '+label+'.');return;}
+    await sb.from('decisoes').delete().in('solicitacao_id',ids);
+    await sb.from('cotacoes').delete().in('solicitacao_id',ids);
+    var rDel=await sb.from('solicitacoes').delete().in('id',ids);
+    if(rDel.error) throw new Error(rDel.error.message);
+    suc('🗑️','Limpo!',ids.length+' solicitação(ões) '+label+' excluída(s).');
+    await carregarDash(); await carregarPend(); await carregarAprov();
+  }catch(e){alert('Erro: '+e.message);}
+}
+
+async function adminReset(){
+  if(!confirm('⚠️⚠️ ATENÇÃO: Isso irá ZERAR TODO O BANCO de dados.\n\nTodas as solicitações, cotações e decisões serão excluídas.\n\nClique OK para continuar.'))return;
+  var conf=prompt('Digite CONFIRMAR para prosseguir:');
+  if((conf||'').trim()!=='CONFIRMAR'){alert('Reset cancelado.');return;}
+  if(MODO_LOCAL){
+    LOCAL_DATA={solicitacoes:[],cotacoes:[],decisoes:[],eco:0};
+    suc('🗑️','Reset completo!','Todos os dados locais foram removidos.');
+    carregarDash();carregarPend();carregarAprov();
+    return;
+  }
+  if(!sb){alert('Sem conexão.');return;}
+  try{
+    var rAll=await sb.from('solicitacoes').select('id');
+    if(rAll.error) throw new Error(rAll.error.message);
+    var allIds=(rAll.data||[]).map(function(r){return r.id;});
+    if(allIds.length){
+      await sb.from('decisoes').delete().in('solicitacao_id',allIds);
+      await sb.from('cotacoes').delete().in('solicitacao_id',allIds);
+      await sb.from('solicitacoes').delete().in('id',allIds);
+    }
+    suc('🗑️','Reset completo!',allIds.length+' registros removidos do banco.');
+    await carregarDash(); await carregarPend(); await carregarAprov();
+  }catch(e){alert('Erro no reset: '+e.message);}
+}
+
+// ===== RELATÓRIO MENSAL PARA IMPRESSÃO =====
+async function imprimirRelatorio(){
+  var ini=document.getElementById('dt-ini').value;
+  var fim=document.getElementById('dt-fim').value;
+  var data=[];
+  if(!MODO_LOCAL&&sb){
+    var q=sb.from('solicitacoes').select('*,cotacoes(*)').order('criado_em',{ascending:false});
+    if(ini) q=q.gte('criado_em',ini+'T00:00:00');
+    if(fim) q=q.lte('criado_em',fim+'T23:59:59');
+    var r=await q;
+    data=r.data||[];
+  } else {
+    data=LOCAL_DATA.solicitacoes.filter(function(s){
+      if(!s.criado_em)return true;
+      var dt=s.criado_em.slice(0,10);
+      if(ini&&dt<ini)return false;
+      if(fim&&dt>fim)return false;
+      return true;
+    }).map(function(s){return Object.assign({},s,{cotacoes:LOCAL_DATA.cotacoes.filter(function(c){return c.solicitacao_id===s.id;})});});
+  }
+
+  var aprov=data.filter(function(d){return d.status==='aprovado'||d.status==='auto-aprovado';});
+  var rej=data.filter(function(d){return d.status==='rejeitado';});
+  var rev=data.filter(function(d){return d.status==='revisao';});
+  var pend=data.filter(function(d){return d.status==='pendente';});
+  var eco=aprov.reduce(function(a,d){return a+(Number(d.economia)||0);},0);
+  var aprovV=aprov.reduce(function(a,d){return a+(Number(d.menor_valor)||0);},0);
+
+  var ini2=ini?ini.split('-').reverse().join('/'):'—';
+  var fim2=fim?fim.split('-').reverse().join('/'):'—';
+
+  function tabelaRows(list, isAprov){
+    if(!list.length) return '<tr><td colspan="7" style="text-align:center;color:#666;padding:10px">Nenhum registro</td></tr>';
+    return list.map(function(s,i){
+      var cots=(s.cotacoes||[]);
+      var cotTxt=cots.map(function(c){return c.fornecedor+': '+fBR(c.valor)+(Number(c.valor)===(s.menor_valor||0)?' ✓':'');}).join(' | ');
+      var aprovInfo='';
+      if(isAprov&&s.decidido_em){
+        aprovInfo='<br><span style="color:#16a34a;font-size:8px;font-weight:700">'
+          +(s.protocolo?'📋 '+s.protocolo+' · ':'')
+          +'✅ '+fDataHora(s.decidido_em)
+          +(s.decidido_por?' · 👤 '+s.decidido_por:'')
+          +'</span>';
+      }
+      return '<tr style="background:'+(i%2?'#f9fafb':'#fff')+'">'
+        +'<td>'+esc(s.id||'')+aprovInfo+'</td>'
+        +'<td>'+fData(s.criado_em)+'</td>'
+        +'<td style="font-weight:600">'+esc(s.descricao||'')+'</td>'
+        +'<td>'+esc(s.area||'—')+'</td>'
+        +'<td style="text-align:right;font-weight:700">'+fBR(s.menor_valor||0)+'</td>'
+        +'<td style="font-size:9px;color:#555">'+cotTxt+'</td>'
+        +'</tr>';
+    }).join('');
+  }
+
+  function secao(titulo,cor,list,isAprov){
+    if(!list.length) return '';
+    return '<h3 style="margin:20px 0 8px;color:'+cor+';font-size:14px;border-bottom:2px solid '+cor+';padding-bottom:4px">'+titulo+' ('+list.length+')</h3>'
+      +'<table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:12px">'
+      +'<thead><tr style="background:'+cor+';color:#fff">'
+      +'<th style="padding:5px 6px;text-align:left">ID / Protocolo</th>'
+      +'<th style="padding:5px 6px;text-align:left">Data</th>'
+      +'<th style="padding:5px 6px;text-align:left">Descrição</th>'
+      +'<th style="padding:5px 6px;text-align:left">Área</th>'
+      +'<th style="padding:5px 6px;text-align:right">Valor</th>'
+      +'<th style="padding:5px 6px;text-align:left">Cotações</th>'
+      +'</tr></thead><tbody>'+tabelaRows(list,isAprov)+'</tbody></table>';
+  }
+
+  var html='<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
+    +'<title>Relatório Compras Esposende '+ini2+' – '+fim2+'</title>'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;color:#111;background:#fff;padding:20px}'
+    +'.logo-area{display:flex;align-items:center;gap:12px;margin-bottom:4px}'
+    +'h1{font-size:18px;font-weight:800;color:#1E3A5F}h2{font-size:13px;color:#555;font-weight:400}'
+    +'.kpi-row{display:flex;gap:12px;margin:16px 0;flex-wrap:wrap}'
+    +'.kpi-box{border:1px solid #ddd;border-radius:8px;padding:10px 14px;flex:1;min-width:120px}'
+    +'.kpi-box .val{font-size:20px;font-weight:800}.kpi-box .lbl{font-size:10px;color:#666;margin-top:2px}'
+    +'@media print{@page{margin:15mm;size:A4 landscape}button{display:none!important}}'
+    +'</style></head><body>'
+    +'<div class="logo-area">'
+    +'<div style="width:40px;height:40px;background:#1E3A5F;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px">E</div>'
+    +'<div><h1>Esposende — Relatório de Compras</h1><h2>Período: '+ini2+' a '+fim2+'</h2></div>'
+    +'<div style="margin-left:auto;font-size:10px;color:#888">Gerado em: '+new Date().toLocaleString('pt-BR')+'</div>'
+    +'</div>'
+    +'<div class="kpi-row">'
+    +'<div class="kpi-box" style="border-color:#22c55e"><div class="val" style="color:#16a34a">'+aprov.length+'</div><div class="lbl">✅ Aprovadas</div><div style="font-size:11px;color:#555;margin-top:4px">'+fBR(aprovV)+'</div></div>'
+    +'<div class="kpi-box" style="border-color:#22c55e"><div class="val" style="color:#16a34a">'+fBR(eco)+'</div><div class="lbl">💰 Economia gerada</div></div>'
+    +'<div class="kpi-box" style="border-color:#ef4444"><div class="val" style="color:#dc2626">'+rej.length+'</div><div class="lbl">❌ Rejeitadas</div></div>'
+    +'<div class="kpi-box" style="border-color:#f59e0b"><div class="val" style="color:#d97706">'+rev.length+'</div><div class="lbl">🔄 Em revisão</div></div>'
+    +'<div class="kpi-box" style="border-color:#f59e0b"><div class="val" style="color:#d97706">'+pend.length+'</div><div class="lbl">⏳ Pendentes</div></div>'
+    +'<div class="kpi-box" style="border-color:#3b82f6"><div class="val" style="color:#2563eb">'+data.length+'</div><div class="lbl">📋 Total solicitações</div></div>'
+    +'</div>'
+    +secao('✅ APROVADAS','#16a34a',aprov,true)
+    +secao('❌ REJEITADAS','#dc2626',rej,false)
+    +secao('🔄 EM REVISÃO','#d97706',rev,false)
+    +secao('⏳ PENDENTES','#6b7280',pend,false)
+    +'<div style="margin-top:20px;text-align:center;font-size:9px;color:#999;border-top:1px solid #eee;padding-top:8px">Sistema de Aprovação de Compras — Esposende · Gerado em '+new Date().toLocaleString('pt-BR')+'</div>'
+    +'<div style="margin-top:12px;text-align:center"><button onclick="window.print()" style="background:#1E3A5F;color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:14px;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button></div>'
+    +'</body></html>';
+
+  var w=window.open('','_blank','width=1100,height=800');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(function(){w.focus();},400);
 }
 
 </script>
