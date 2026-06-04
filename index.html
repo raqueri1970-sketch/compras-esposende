@@ -974,9 +974,12 @@ option{
     <div style="padding:.85rem 1.1rem">
       <div class="fg"><label class="fl">Limite para aprovação (R$)</label><input class="fi" id="cfg-limite" type="number" value="5000"></div>
       <div class="fg"><label class="fl">WhatsApp Presidência</label><input class="fi" id="cfg-wa" value="5511975382103" type="tel"></div>
-      <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:8px;padding:9px 12px">
-        <div style="font-size:11px;font-weight:700;color:#22c55e;margin-bottom:3px">✅ Aprovação sem PIN</div>
-        <div style="font-size:10px;color:#94A3B8">O Presidente clica em Aprovar diretamente. Um protocolo com data e hora é gerado automaticamente e fica registrado nos Aprovados.</div>
+      <div style="background:rgba(37,99,235,.08);border:1.5px solid rgba(37,99,235,.3);border-radius:10px;padding:12px 14px;margin-top:4px">
+        <div style="font-size:12px;font-weight:800;color:#60A5FA;margin-bottom:8px">🔐 PIN do Presidente</div>
+        <div style="font-size:11px;color:#94A3B8;margin-bottom:10px">Somente quem souber o PIN consegue Aprovar, Rejeitar ou Revisar. Padrão inicial: <strong style="color:#fff">1234</strong></div>
+        <div class="fg"><label class="fl">Novo PIN (4 dígitos)</label><input class="fi" id="cfg-pin-novo" type="password" maxlength="4" inputmode="numeric" placeholder="••••"></div>
+        <div class="fg"><label class="fl">Confirmar PIN</label><input class="fi" id="cfg-pin-conf" type="password" maxlength="4" inputmode="numeric" placeholder="••••"></div>
+        <button class="bap" style="width:100%;padding:10px;font-size:13px;margin-top:4px" onclick="salvarPin()">🔐 Salvar novo PIN</button>
       </div>
       <button class="bsend" style="margin-top:0;padding:10px" onclick="salvarConfigs()">Salvar configurações</button>
     </div>
@@ -990,6 +993,36 @@ option{
     </div>
   </div>
 
+<!-- MODAL PIN PRESIDENTE -->
+<div id="pin-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:350;align-items:center;justify-content:center" onclick="fPin(event)">
+  <div style="background:#fff;border-radius:24px;padding:1.8rem 1.5rem;width:min(92vw,360px);text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.4)" onclick="event.stopPropagation()">
+    <div style="font-size:42px;margin-bottom:8px">&#128274;</div>
+    <div style="font-size:18px;font-weight:800;color:#111827;margin-bottom:4px">PIN da Presidência</div>
+    <div style="font-size:13px;color:#6B7280;margin-bottom:20px" id="pin-subtitulo">Digite o PIN para confirmar a decisão</div>
+    <div style="display:flex;justify-content:center;gap:12px;margin-bottom:20px">
+      <div style="width:14px;height:14px;border-radius:50%;background:#E5E7EB;transition:background .15s" id="pd0"></div>
+      <div style="width:14px;height:14px;border-radius:50%;background:#E5E7EB;transition:background .15s" id="pd1"></div>
+      <div style="width:14px;height:14px;border-radius:50%;background:#E5E7EB;transition:background .15s" id="pd2"></div>
+      <div style="width:14px;height:14px;border-radius:50%;background:#E5E7EB;transition:background .15s" id="pd3"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
+      <button onclick="pinDigit('1')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">1</button>
+      <button onclick="pinDigit('2')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">2</button>
+      <button onclick="pinDigit('3')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">3</button>
+      <button onclick="pinDigit('4')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">4</button>
+      <button onclick="pinDigit('5')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">5</button>
+      <button onclick="pinDigit('6')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">6</button>
+      <button onclick="pinDigit('7')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">7</button>
+      <button onclick="pinDigit('8')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">8</button>
+      <button onclick="pinDigit('9')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">9</button>
+      <button onclick="pinApagar()" style="padding:16px;font-size:16px;font-weight:700;background:#FEF3C7;border:1.5px solid #FDE68A;border-radius:14px;cursor:pointer;color:#92400E">&#9003;</button>
+      <button onclick="pinDigit('0')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">0</button>
+      <button onclick="fPin()" style="padding:16px;font-size:14px;font-weight:700;background:#FEE2E2;border:1.5px solid #FECACA;border-radius:14px;cursor:pointer;color:#991B1B">&#x2715;</button>
+    </div>
+    <div id="pin-erro" style="display:none;color:#DC2626;font-size:13px;font-weight:700;margin-top:4px">&#10060; PIN incorreto. Tente novamente.</div>
+  </div>
+</div>
+<style>@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}</style>
 <!-- CONFIRM -->
 <div class="conf-ov" id="conf-ov" onclick="fConf(event)">
   <div class="conf-sh" onclick="event.stopPropagation()">
@@ -1020,10 +1053,13 @@ var WA_TEL='5511975382103';
 var FORN=[{"nome": "LOGNET", "area": "Materiais de TI e automação", "vendedor": "Thiago / Hailton", "contato": "(81) 99701-1869 / (81) 98832-4748", "pagamento": "À VISTA"}, {"nome": "MICRO OFFICE", "area": "Materiais de TI e automação", "vendedor": "Lucilene / Jordania", "contato": "(81) 2129-7554 / (81) 2129-7552", "pagamento": "À VISTA"}, {"nome": "RECIFETRONIC", "area": "Materiais de TI e automação", "vendedor": "Oliveira", "contato": "(81) 4113-0042", "pagamento": "À VISTA / BOLETO"}, {"nome": "EXPRESSO INFORMÁLTICA", "area": "Materiais de TI e automação", "vendedor": "Marcella", "contato": "(81) 98816-6868", "pagamento": "À VISTA / BOLETO ANTECIPADO"}, {"nome": "GAMA INFORMÁTICA", "area": "Materiais de TI e automação", "vendedor": "Gleison", "contato": "(81) 99617-8828", "pagamento": "À VISTA / BOLETO ANTECIPADO"}, {"nome": "TECHNO SPACE", "area": "Materiais de TI e automação", "vendedor": "Kelvin", "contato": "(81) 99166-9411", "pagamento": "BOLETO"}, {"nome": "SISTEMAQ", "area": "Materiais de TI e automação", "vendedor": "Caio / Laís", "contato": "(81) 98231-9169 / (81) 99833-0576", "pagamento": "BOLETO"}, {"nome": "GMI DISTRIBUIDORA", "area": "Materiais de TI e automação", "vendedor": "Romério", "contato": "(83) 99940-4771", "pagamento": "À VISTA"}, {"nome": "HG CODE SOLUTIONS", "area": "Materiais de TI e automação", "vendedor": "Patricia / Helder", "contato": "(81) 99269-4353 / (81) 99323-1432", "pagamento": "À VISTA"}, {"nome": "HX SOLUTIONS", "area": "Materiais de TI e automação", "vendedor": "Tovar / Argemiro", "contato": "(81) 98999-5889 / (81) 99936-6007", "pagamento": "À VISTA"}, {"nome": "KGM LAN DISTRIBUIDORA", "area": "Monitoramento e CFTV", "vendedor": "Valéria / Rita", "contato": "(81) 99197-4388 / (81) 999679-1951", "pagamento": "BOLETO"}, {"nome": "TNT INFO", "area": "Materiais de TI e automação", "vendedor": "Gleicy", "contato": "(19) 99900-5263", "pagamento": "À VISTA"}, {"nome": "BZ TECH", "area": "Materiais de TI e automação", "vendedor": "Nickaeli", "contato": "(41) 99233-7949", "pagamento": "À VISTA"}, {"nome": "CIA DO NOBREAK", "area": "Materiais de TI e automação", "vendedor": "Carlos", "contato": "(81) 98886-8207", "pagamento": "BOLETO"}, {"nome": "PROCESSTEC", "area": "Materiais de TI e automação", "vendedor": "Laura", "contato": "(81) 9906-8474", "pagamento": "À VISTA"}, {"nome": "ILAND SOLUÇÕES", "area": "Materiais de TI e automação", "vendedor": "Kerolly", "contato": "(81)97341-1361", "pagamento": "À VISTA"}, {"nome": "LEMOS TELECOM", "area": "Materiais de TI e automação", "vendedor": "Flávio", "contato": "(81) 98664-8548", "pagamento": "BOLETO"}, {"nome": "TELCABOS DISTRIBUIDORA", "area": "Materiais de TI e automação", "vendedor": "Rosival", "contato": "(81) 98140-9473", "pagamento": "À VISTA"}, {"nome": "PRO4CE AUTOMAÇÃO", "area": "Materiais de TI e automação", "vendedor": "Amanda", "contato": "(41) 98836-2591", "pagamento": "À VISTA"}, {"nome": "COOPTEC SOLUÇÕES", "area": "Materiais de TI e automação", "vendedor": "Leandro", "contato": "(81) 97905-6187", "pagamento": "À VISTA"}, {"nome": "JAGUAR MAT. ELÉTRICOS", "area": "Materiais elétricos", "vendedor": "Tiago", "contato": "(81) 97904-0140", "pagamento": "BOLETO"}, {"nome": "MAFEMA MAT. ELÉTRICOS", "area": "Materiais elétricos", "vendedor": "Manuel", "contato": "(81) 99757-0019", "pagamento": "BOLETO"}, {"nome": "RIDEL MAT. ELÉTRICOS", "area": "Materiais elétricos", "vendedor": "Anderson", "contato": "(81) 98862-2839", "pagamento": "BOLETO"}, {"nome": "RESSEG DISTRIBUIDORA", "area": "Materiais MRO", "vendedor": "Magna", "contato": "(81) 98830-7824", "pagamento": "BOLETO"}, {"nome": "ESPERANÇA NORDESTE", "area": "Materiais MRO", "vendedor": "Berg", "contato": "(81) 99193-1385", "pagamento": "BOLETO"}, {"nome": "RENASCER DISTRIBUIDORA", "area": "Materiais MRO", "vendedor": "Helio", "contato": "(81) 99144-3714", "pagamento": "BOLETO"}, {"nome": "DIMENSIONAL MAT. ELÉTRICOS", "area": "Materiais elétricos", "vendedor": "Isabel", "contato": "(81) 98694-1430", "pagamento": "À VISTA"}, {"nome": "PJ NEBLINA MAT. ELÉTRICOS", "area": "Materiais elétricos", "vendedor": "Isabel silva", "contato": "(81) 99621-5860", "pagamento": "À VISTA"}, {"nome": "PORTELA DISTRIBUIDORA", "area": "Materiais elétricos", "vendedor": "Hyrla", "contato": "(81) 99448-1461", "pagamento": "À VISTA"}, {"nome": "NORTEL SUPRIMENTOS", "area": "Materiais elétricos", "vendedor": "Walk", "contato": "(81) 98167-0355", "pagamento": "À VISTA"}, {"nome": "AÇOMAIS OLINDA", "area": "Materiais de ferro e aço", "vendedor": "Mekzael", "contato": "(81) 99244-7794", "pagamento": "À VISTA"}, {"nome": "CM PRODUTOS SIDERÚRGICOS", "area": "Materiais de ferro e aço", "vendedor": "André", "contato": "(81) 99775-2535", "pagamento": "BOLETO"}, {"nome": "NOVO NORDESTE ABREU", "area": "Materiais de ferro e aço", "vendedor": "Márcia", "contato": "(81) 99429-5579", "pagamento": "À VISTA"}, {"nome": "MEGA NORDESTE CABO", "area": "Materiais de ferro e aço", "vendedor": "Rebecca", "contato": "(81) 99128-2069", "pagamento": "À VISTA"}, {"nome": "FERRO E AÇO CAMARAGIBE", "area": "Materiais de ferro e aço", "vendedor": "Fabiane", "contato": "(81) 99218-6676", "pagamento": "À VISTA"}, {"nome": "IDEAL FERRO E AÇO", "area": "Materiais de ferro e aço", "vendedor": "Alexsandra", "contato": "(81) 98694-9084", "pagamento": "À VISTA"}, {"nome": "ARCELORMITTAL BRASIL", "area": "Materiais de ferro e aço", "vendedor": "Zara", "contato": "(81) 97106-2706", "pagamento": "À VISTA"}, {"nome": "COMERCIAL GERDAU", "area": "Materiais de ferro e aço", "vendedor": "Danniel", "contato": "(81) 99434-7477", "pagamento": "À VISTA"}, {"nome": "CAFÉ PETINHO", "area": "Materiais de expediente", "vendedor": "Angélica", "contato": "(81) 98512-1472", "pagamento": "BOLETO"}, {"nome": "GRUPO FORTPEL", "area": "Materiais de expediente", "vendedor": "Ana Paula", "contato": "(81) 3541-3424", "pagamento": "BOLETO"}, {"nome": "MAXXISUPRI DISTRIBUIDORA", "area": "Materiais de expediente", "vendedor": "Caryne", "contato": "(81) 3011-8555", "pagamento": "BOLETO"}, {"nome": "KALUNGA PATTEO", "area": "Materiais de expediente", "vendedor": "Jackson", "contato": "(81) 98784-4129", "pagamento": "À VISTA"}, {"nome": "MUNDO DA IMPERMEABILIZAÇÃO", "area": "Materiais de construção e predial", "vendedor": "Norma", "contato": "(81) 97344-8687", "pagamento": "BOLETO"}, {"nome": "CASIMPER IMPERMEABILIZAÇÃO", "area": "Materiais de construção e predial", "vendedor": "Isabel", "contato": "(81) 98139-7113", "pagamento": "BOLETO"}, {"nome": "MAXXCOM IMPERMEABILIZAÇÃO", "area": "Materiais de construção e predial", "vendedor": "Juci", "contato": "(81) 97914-8407", "pagamento": "BOLETO"}, {"nome": "DINAMIKA SOLUÇÕES", "area": "Imobilizado", "vendedor": "Vânia", "contato": "(81) 4137-0060", "pagamento": "BOLETO"}, {"nome": "MADECENTER", "area": "Materiais de marcenaria", "vendedor": "Gilvania", "contato": "(81) 99431-5763", "pagamento": "À VISTA"}, {"nome": "FERREIRA PINTO", "area": "Materiais de marcenaria", "vendedor": "Simone / Edilene", "contato": "(81) 97347-8741 / (81) 9684-8898", "pagamento": "À VISTA"}, {"nome": "ARMAZÉM RIBEIRA", "area": "Materiais de marcenaria", "vendedor": "Elizangela Pereira", "contato": "(81) 99245-4315", "pagamento": "À VISTA"}, {"nome": "LEO MADEIRAS", "area": "Materiais de marcenaria", "vendedor": "Rayane / Gleice", "contato": "(81) 9897-6353 / (81) 9939-1910", "pagamento": "À VISTA"}, {"nome": "VAREJÃO DA MADEIRA", "area": "Materiais de marcenaria", "vendedor": "Luiz", "contato": "(81) 99903-7734", "pagamento": "À VISTA"}, {"nome": "MADEPORT", "area": "Materiais de marcenaria", "vendedor": "Jorge", "contato": "(81) 98776-3322 / (81) 98848-1778", "pagamento": "À VISTA"}, {"nome": "JOSEMAR", "area": "Frete", "vendedor": "Josemar Bezerra", "contato": "(81) 99830-5526", "pagamento": "À VISTA"}, {"nome": "EDUARDO", "area": "Frete", "vendedor": "Eduardo Camara", "contato": "(81) 98653-7157", "pagamento": "À VISTA"}, {"nome": "IMPERIO MÓVEIS TELEVENDAS", "area": "Móveis e eletro", "vendedor": "Jadde", "contato": "(81) 98783-6495 / (81) 31984848", "pagamento": "À VISTA"}, {"nome": "MILLENA MOVEIS TELEVENDAS", "area": "Móveis e eletro", "vendedor": "Valmir", "contato": "(81) 98100-3688 / (81) 4042-3828", "pagamento": "BOLETO"}, {"nome": "LED NORDESTE", "area": "Iluminação", "vendedor": "Levi", "contato": "(85) 99850-8322", "pagamento": "BOLETO"}, {"nome": "GRUPO PJ ILUMINAÇÃO", "area": "Iluminação", "vendedor": "Marianne", "contato": "(81) 99840-9183", "pagamento": "À VISTA"}, {"nome": "NAGA SOLUÇÕES", "area": "Materiais de expediente", "vendedor": "Mariana", "contato": "(81) 99985-8206", "pagamento": "BOLETO"}, {"nome": "PEPAC EMBALAGENS", "area": "Materiais de expediente", "vendedor": "Wodson Neves", "contato": "(81) 98173-8290", "pagamento": "BOLETO"}, {"nome": "ALLTAPE FITAS", "area": "Materiais de expediente", "vendedor": "Dayse", "contato": "(81) 98113-5595", "pagamento": "À VISTA"}, {"nome": "SUZANO PAPEL TELEVENDAS", "area": "Materiais de expediente", "vendedor": "Roberta Assis", "contato": "(11) 4000-1222", "pagamento": "À VISTA"}, {"nome": "LOJA DO CONDOMINIO TELEVENDAS", "area": "Materiais MRO", "vendedor": "Tatiana", "contato": "(81) 99906-0055", "pagamento": "BOLETO"}, {"nome": "BACCHI ARTEFATOS DE FERRO", "area": "Marketing", "vendedor": "Ivanildo", "contato": "(81) 9989-1263", "pagamento": "À VISTA"}, {"nome": "ACIOMEC EMBALAGENS", "area": "Materiais de expediente", "vendedor": "Renata", "contato": "(81) 98427-3080", "pagamento": "BOLETO"}, {"nome": "SÃO BRAZ", "area": "Materiais de expediente", "vendedor": "Charles", "contato": "(81) 99163-5095", "pagamento": "BOLETO"}, {"nome": "EKKO COPOS E BRINDES", "area": "Materiais de expediente", "vendedor": "Guilherme", "contato": "(81) 99507-0092", "pagamento": "À VISTA"}, {"nome": "FLEX EMBALAGENS PLÁSTICAS", "area": "Materiais de expediente", "vendedor": "Fernanda", "contato": "(81) 99804-1900", "pagamento": "BOLETO"}, {"nome": "ETIQ PLAST TRAVA ANEL", "area": "Materiais de expediente", "vendedor": "Osmair Teodoro", "contato": "(19) 98921-4338", "pagamento": "À VISTA"}, {"nome": "ART LED ILUMINAÇÃO", "area": "Iluminação", "vendedor": "Adylene", "contato": "(81) 99508-1799", "pagamento": "À VISTA"}, {"nome": "MODE ON ILUMINAÇÃO", "area": "Iluminação", "vendedor": "José", "contato": "(81) 99610-6300", "pagamento": "À VISTA / BOLETO"}, {"nome": "DUFRIO REFRIGERAÇÃO", "area": "Materiais de refrigeração", "vendedor": "Ítalo", "contato": "(81) 99656-2584", "pagamento": "À VISTA"}, {"nome": "FRIGELAR", "area": "Materiais de refrigeração", "vendedor": "Edilene", "contato": "(81) 98838-8153", "pagamento": "À VISTA"}, {"nome": "FRIOPEÇAS", "area": "Materiais de refrigeração", "vendedor": "Karoline", "contato": "(81) 99680-0016", "pagamento": "BOLETO"}, {"nome": "CLIMA RIO", "area": "Materiais de refrigeração", "vendedor": "Thaysa", "contato": "(81) 99521-4699", "pagamento": "À VISTA"}, {"nome": "NORTE PEÇAS REFRIGERAÇÃO", "area": "Materiais de refrigeração", "vendedor": "Danilo", "contato": "(81) 99910-2560", "pagamento": "À VISTA"}, {"nome": "NORDAP REFRIGERAÇÃO", "area": "Materiais de refrigeração", "vendedor": "Marciana", "contato": "(81) 99196-1747", "pagamento": "À VISTA"}, {"nome": "GLOBAL MUSIC INSTRUMENTOS / INNOVEX DISTRIBUIDORA", "area": "Imobilizado", "vendedor": "Luiz", "contato": "(81) 99629-0567", "pagamento": "À VISTA"}, {"nome": "DIGITAL COMERCIO", "area": "Iluminação", "vendedor": "Rayssa", "contato": "(81) 98257-5570", "pagamento": "À VISTA"}, {"nome": "JUNGHEINRICH EQUIPAMENTOS", "area": "Imobilizado", "vendedor": "Venancio Melo", "contato": "(81) 98115-2174", "pagamento": "À VISTA"}, {"nome": "PRENORTE FABRICADOS", "area": "Materiais de construção e predial", "vendedor": "Fabyana Gonçalves", "contato": "(81) 3542-1485", "pagamento": "À VISTA"}, {"nome": "DO MESTRE ARGAMASSAS", "area": "Materiais de construção e predial", "vendedor": "Priscila Melo", "contato": "(81) 98133-2966", "pagamento": "BOLETO"}, {"nome": "PAMESA", "area": "Materiais de construção e predial", "vendedor": "Marcus Vinicius", "contato": "(81) 99545-1001", "pagamento": "BOLETO"}, {"nome": "ARMAZÉM CORAL", "area": "Materiais de construção e predial", "vendedor": "Suely Ramos", "contato": "(81) 98985-5960", "pagamento": "BOLETO"}, {"nome": "VENEZA CONSTRUÇÃO TELEVENDAS", "area": "Materiais de construção e predial", "vendedor": "Michele Lucia", "contato": "(81) 99872-2432", "pagamento": "BOLETO"}, {"nome": "ELDORADO TINTAS CASA & CONSTRUÇÃO", "area": "Materiais de construção e predial", "vendedor": "Douglas", "contato": "(81) 3428-3887", "pagamento": "BOLETO"}, {"nome": "CANAL DA CONSTRUÇÃO TELEVENDAS", "area": "Materiais de construção e predial", "vendedor": "Benedita Correia", "contato": "(81) 98256-3934", "pagamento": "BOLETO"}, {"nome": "FERREIRA COSTA TELEVENDAS", "area": "Materiais MRO", "vendedor": "Jordana", "contato": "(81) 99296-6653", "pagamento": "À VISTA"}, {"nome": "PRÉ-MOLDADOS BOM CONSELHO", "area": "Materiais de construção e predial", "vendedor": "Thais - Thamires", "contato": "(81) 98456-7835", "pagamento": "À VISTA"}, {"nome": "WALTER LOPES PRÉ-FABRICADOS", "area": "Materiais de construção e predial", "vendedor": "Mayara", "contato": "(81) 99628-0080", "pagamento": "À VISTA"}, {"nome": "PPP - PREMOLDADOS", "area": "Materiais de construção e predial", "vendedor": "Elisangela", "contato": "(81) 98637-1841", "pagamento": "À VISTA"}, {"nome": "CJC CONSTRUÇÕES", "area": "Materiais de construção e predial", "vendedor": "Vanessa Lins", "contato": "(81) 98970-0513", "pagamento": "À VISTA"}, {"nome": "N ISOPOR'S DISTRIBUIDORA", "area": "Materiais de construção e predial", "vendedor": "", "contato": "(81) 99646-4066", "pagamento": "À VISTA"}, {"nome": "DISPOR - DISTRIBUIDOR DE EPS", "area": "Materiais de construção e predial", "vendedor": "João Paulo", "contato": "(81) 99919-4355", "pagamento": "À VISTA"}, {"nome": "ARMAZÉM RIBEIRA RN", "area": "Materiais de marcenaria", "vendedor": "Jordão", "contato": "(84) 99441-0273", "pagamento": "À VISTA"}, {"nome": "GMAD JAMAD MADEIRAS", "area": "Materiais de marcenaria", "vendedor": "Josinete", "contato": "(84) 98161-2594", "pagamento": "À VISTA"}, {"nome": "COMJOL", "area": "Materiais de construção e predial", "vendedor": "Marleide", "contato": "(84) 98797-7044", "pagamento": "À VISTA"}, {"nome": "LAMPADINHA", "area": "Materiais elétricos", "vendedor": "Josué", "contato": "(84) 98808-7068", "pagamento": "À VISTA"}, {"nome": "IVANLUX MATERIAIS ELÉTRICOS", "area": "Materiais elétricos", "vendedor": "Josivan", "contato": "(84) 99928-0213", "pagamento": "À VISTA"}, {"nome": "LEVFORT CONSTRUÇÕES", "area": "Materiais de construção e predial", "vendedor": "Jessica", "contato": "(81) 99449-2494", "pagamento": "À VISTA"}, {"nome": "CONCREARTE CONCRETEIRA", "area": "Materiais de construção e predial", "vendedor": "Rubem Filho", "contato": "(81) 99117-5725", "pagamento": "À VISTA"}, {"nome": "LOJAS 2001 ABREU E LIMA", "area": "Materiais de construção e predial", "vendedor": "Dayana", "contato": "(81) 99392-9338", "pagamento": "BOLETO"}, {"nome": "TINTAS IQUINE", "area": "Materiais de pintura", "vendedor": "Newton Jr", "contato": "(81) 98956-6323", "pagamento": "À VISTA"}, {"nome": "DISBEC DISTRIBUIDORA", "area": "Materiais de pintura", "vendedor": "Rogério Nunes", "contato": "(81) 99103-3740", "pagamento": "BOLETO"}, {"nome": "LOJÃO DO PINTOR", "area": "Materiais de pintura", "vendedor": "Marcus André", "contato": "(81) 99416-7678", "pagamento": "À VISTA"}, {"nome": "DECOR COLORS RECIFE BOA VIAGEM", "area": "Materiais de pintura", "vendedor": "Gleicy", "contato": "(81) 97316-0299", "pagamento": "BOLETO"}, {"nome": "BRAVO EPIS DISTRIBUIDORA", "area": "Epi/Epc (segurança do trabalho)", "vendedor": "Joicy Souza", "contato": "(81) 99974-9610", "pagamento": "BOLETO"}, {"nome": "PERNAMBUCO DISTRIBUIDORA | GRUPO PE", "area": "Epi/Epc (segurança do trabalho)", "vendedor": "Amanda", "contato": "(81) 98575-3829", "pagamento": "BOLETO"}, {"nome": "CASA DO EPI", "area": "Epi/Epc (segurança do trabalho)", "vendedor": "Rose", "contato": "(81) 99299-6073", "pagamento": "À VISTA / BOLETO"}, {"nome": "ATACAREJO DO EPI", "area": "Epi/Epc (segurança do trabalho)", "vendedor": "Sandra Bezerra", "contato": "(81) 4141-8425", "pagamento": "À VISTA / BOLETO"}, {"nome": "EFACINI INFORMÁTICA", "area": "Materiais de TI e automação", "vendedor": "Vinícius Terra", "contato": "(47) 3350-6150", "pagamento": "À VISTA"}, {"nome": "PONTO TECNOLOGIA", "area": "Materiais de TI e automação", "vendedor": "Andressa Borges", "contato": "(41) 99809-0118", "pagamento": "À VISTA"}, {"nome": "MERCANTIL MEDICAMENTOS", "area": "Materiais de expediente", "vendedor": "Sandra Galdino", "contato": "(81) 99647-1306", "pagamento": "À VISTA"}, {"nome": "PARE FOGO EXTINTORES", "area": "Epi/Epc (segurança do trabalho)", "vendedor": "Flávio", "contato": "(87) 99600-7938", "pagamento": "BOLETO"}, {"nome": "KINITOS FESTAS CASA AMARELA", "area": "Materiais de expediente", "vendedor": "Rayane", "contato": "(81) 98114-5790", "pagamento": "À VISTA"}, {"nome": "COBREFLEX", "area": "Materiais elétricos", "vendedor": "Paula Dias", "contato": "(81) 98925-9375", "pagamento": "À VISTA"}, {"nome": "BRASFIO INDÚSTRIA", "area": "Materiais elétricos", "vendedor": "ERASTO", "contato": "(81) 99918-4519", "pagamento": "À VISTA"}, {"nome": "AM GERADORES", "area": "Materiais elétricos", "vendedor": "Walmyr", "contato": "(81) 99174-4381", "pagamento": "À VISTA"}, {"nome": "BR GRUPOS GERADORES", "area": "Materiais elétricos", "vendedor": "Luis Renato", "contato": "(81) 98415-2041", "pagamento": "À VISTA"}, {"nome": "CR GERADORES", "area": "Materiais elétricos", "vendedor": "CR", "contato": "(81) 99601-3377", "pagamento": "À VISTA"}, {"nome": "PERNAMBUCO ALUMINIO", "area": "Materiais de ferro e aço", "vendedor": "Magna", "contato": "(81) 98595-4915", "pagamento": "À VISTA"}, {"nome": "ARAUJO MADEIRAS", "area": "Materiais de marcenaria", "vendedor": "Silene", "contato": "(81) 98595-1211", "pagamento": "À VISTA"}, {"nome": "TC FORROS E DIVISÓRIAS", "area": "Materiais de drywall", "vendedor": "Taísa", "contato": "(81) 98596-9678", "pagamento": "BOLETO"}, {"nome": "ESPAÇO DRYWALL CARUARU", "area": "Materiais de drywall", "vendedor": "Manuela", "contato": "(81) 99600-5758", "pagamento": "À VISTA"}, {"nome": "IN DRY - DRYWALL", "area": "Materiais de drywall", "vendedor": "Jessica", "contato": "(81) 98952-9276", "pagamento": "BOLETO"}, {"nome": "DIVIMULTI DRYWALL", "area": "Materiais de drywall", "vendedor": "Mayara Medeiros", "contato": "(81) 99794-1750", "pagamento": "BOLETO"}, {"nome": "PERFECTTO FORROS E DIVISÓRIAS", "area": "Materiais de drywall", "vendedor": "Eduardo", "contato": "(81) 98805-6354", "pagamento": "À VISTA"}, {"nome": "DIVIAÇO DIVISÓRIAS FORROS", "area": "Materiais de drywall", "vendedor": "Socorro", "contato": "(84) 99616-5112", "pagamento": "À VISTA"}, {"nome": "PERFIL FORROS", "area": "Materiais de drywall", "vendedor": "Thiago", "contato": "(83) 99173-8715", "pagamento": "À VISTA"}, {"nome": "AÇO & CIA", "area": "Materiais de ferro e aço", "vendedor": "Juliete", "contato": "(84) 98726-6639", "pagamento": "À VISTA"}, {"nome": "MCC RESÍDUOS", "area": "Materiais de construção e predial", "vendedor": "Patricia", "contato": "(81) 4141-3382", "pagamento": "BOLETO"}, {"nome": "PAPA METRALHA", "area": "Materiais de construção e predial", "vendedor": "Ana Carolina", "contato": "(81) 99608-1540", "pagamento": "À VISTA / BOLETO"}, {"nome": "VALDENIO CAÇAMBAS CARUARU", "area": "Materiais de construção e predial", "vendedor": "Leninha", "contato": "(81) 99983-7190", "pagamento": "À VISTA"}, {"nome": "MESTRE DA OBRA | LOCAÇÃO DE EQUIPAMENTOS - CARUARU", "area": "Materiais de construção e predial", "vendedor": "Laurinda", "contato": "(81) 98887-0290", "pagamento": "À VISTA"}, {"nome": "ARMAZÉM COLORADO CARUARU", "area": "Materiais de construção e predial", "vendedor": "Renan", "contato": "(81) 99249-5526", "pagamento": "À VISTA"}, {"nome": "COMERCIAL BATISTA CARUARU", "area": "Materiais de construção e predial", "vendedor": "Wollace", "contato": "(81) 99986-8263", "pagamento": "À VISTA"}, {"nome": "ARMAZÉM MACOL CARUARU", "area": "Materiais de construção e predial", "vendedor": "Vendas", "contato": "(81) 99666-1070", "pagamento": "À VISTA"}, {"nome": "COMERCIAL JUNIOR CARUARU", "area": "Materiais de construção e predial", "vendedor": "Vendas", "contato": "(81) 99909-0119", "pagamento": "À VISTA"}, {"nome": "LOJA DO MECÂNICO TELEVENDAS", "area": "Materiais MRO", "vendedor": "Bruno Caramori", "contato": "(16) 98224-1677", "pagamento": "À VISTA / BOLETO"}, {"nome": "PERFIL TUBOS CARUARU", "area": "Materiais de ferro e aço", "vendedor": "Maria Eduarda", "contato": "(81) 97337-3813", "pagamento": "À VISTA"}, {"nome": "Top Mix Metais E Esquadrias", "area": "Materiais de ferro e aço", "vendedor": "Gilmara", "contato": "(81) 98819-1484", "pagamento": "À VISTA"}, {"nome": "PALMA PARAFUSOS", "area": "Materiais MRO", "vendedor": "Gilson", "contato": "(81) 98935-9512", "pagamento": "À VISTA"}];
 var sb=null;
 var _aprovTodos=[];
-var _cAcao='',_cSolId='',_cDesc='';
+var _cAcao='',_cSolId='',_cDesc='',_cVal='',_cForn='';
 // Perfil do usuário — admin por padrão (sem auth ainda)
 var EU_PERFIL='admin';
 var EU_NOME='Ricardo';
+// PIN do Presidente — admin altera na aba Configurações
+var PIN_PRESIDENTE='1234';
+(function(){try{var p=localStorage.getItem('esp_pin');if(p)PIN_PRESIDENTE=p;}catch(e){}}());
 
 // INIT
 var LOCAL_DATA = {solicitacoes:[], cotacoes:[], decisoes:[]};
@@ -1156,7 +1192,10 @@ async function carregarDash(){
     var ticket0=aprov0.length?aprovV0/aprov0.length:0;
     var taxa0=data0.length?Math.round(aprov0.length/data0.length*100):0;
     var now0=new Date();
-    var mes0=LOCAL_DATA.solicitacoes.filter(function(s){var dt=new Date(s.criado_em||'');return dt.getMonth()===now0.getMonth()&&dt.getFullYear()===now0.getFullYear();}).length;
+    var mes0=LOCAL_DATA.solicitacoes.filter(function(s){
+      var dt=new Date(s.criado_em||'');
+      return (s.status==='aprovado'||s.status==='auto-aprovado')&&dt.getMonth()===now0.getMonth()&&dt.getFullYear()===now0.getFullYear();
+    }).length;
     document.getElementById('d-eco').textContent=fBR(eco0);
     document.getElementById('d-eco-sub').textContent=aprov0.length+' compras aprovadas no período';
     document.getElementById('d-taxa').textContent=taxa0+'%';
@@ -1202,7 +1241,7 @@ async function carregarDash(){
   var ticket=aprov.length?aprovV/aprov.length:0;
   var taxa=data.length?Math.round(aprov.length/data.length*100):0;
   var now=new Date();
-  var mes=data.filter(function(d){var dt=new Date(d.criado_em);return dt.getMonth()===now.getMonth()&&dt.getFullYear()===now.getFullYear();}).length;
+  var mes=data.filter(function(d){var dt=new Date(d.criado_em);return (d.status==='aprovado'||d.status==='auto-aprovado')&&dt.getMonth()===now.getMonth()&&dt.getFullYear()===now.getFullYear();}).length;
   document.getElementById('d-eco').textContent=fBR(eco);
   document.getElementById('d-eco-sub').textContent=aprov.length+' compras aprovadas no período';
   document.getElementById('d-taxa').textContent=taxa+'%';
@@ -1371,9 +1410,9 @@ function rLista(contId,data,tipo){
         +'" style="margin-top:9px;min-height:48px" placeholder="Observação (opcional)..." '
         +'onclick="event.stopPropagation()"></textarea>'
         +'<div class="d3">'
-        +'<button class="bap" onclick="event.stopPropagation();abrConf(\'aprovar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\''+esc(s.menor_fornecedor||'')+'\')">✅ Aprovar</button>'
-        +'<button class="brv" onclick="event.stopPropagation();abrConf(\'revisar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">🔄 Revisar</button>'
-        +'<button class="bre" onclick="event.stopPropagation();abrConf(\'rejeitar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">❌ Rejeitar</button>'
+        +'<button class="bap" onclick="event.stopPropagation();abrirPinModal(\'aprovar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\''+esc(s.menor_fornecedor||'')+'\')">✅ Aprovar</button>'
+        +'<button class="brv" onclick="event.stopPropagation();abrirPinModal(\'revisar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">🔄 Revisar</button>'
+        +'<button class="bre" onclick="event.stopPropagation();abrirPinModal(\'rejeitar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">❌ Rejeitar</button>'
         +'<button class="brv" style="background:#2563EB;color:#fff" onclick="event.stopPropagation();reenvWA(\''+s.id+'\')">📲 Reenviar</button>'
         +'</div>';
     }else{
@@ -1629,25 +1668,113 @@ function lerXLS(inp){
   rd.readAsArrayBuffer(inp.files[0]);
 }
 
+
+// ===== SISTEMA PIN PRESIDENTE =====
+var _pinBuffer='';
+var _pinCallback=null;
+
+function abrirPinModal(acao,id,desc,val,forn){
+  // Guarda contexto da ação para executar após PIN correto
+  _cAcao=acao;_cSolId=id;_cDesc=desc;
+  _pinBuffer='';
+  _pinAtualizarDots();
+  document.getElementById('pin-erro').style.display='none';
+  var labels={
+    aprovar:'✅ Confirmar APROVAÇÃO',
+    rejeitar:'❌ Confirmar REJEIÇÃO',
+    revisar:'🔄 Solicitar REVISÃO'
+  };
+  document.getElementById('pin-subtitulo').textContent=(labels[acao]||'Confirmar decisão');
+  document.getElementById('pin-ov').style.display='flex';
+}
+
+function fPin(e){
+  if(e&&e.target!==document.getElementById('pin-ov'))return;
+  document.getElementById('pin-ov').style.display='none';
+  _pinBuffer='';
+  _pinAtualizarDots();
+}
+
+function pinDigit(d){
+  if(_pinBuffer.length>=4)return;
+  _pinBuffer+=d;
+  _pinAtualizarDots();
+  if(_pinBuffer.length===4) setTimeout(pinVerificar,180);
+}
+
+function pinApagar(){
+  _pinBuffer=_pinBuffer.slice(0,-1);
+  _pinAtualizarDots();
+  document.getElementById('pin-erro').style.display='none';
+}
+
+function _pinAtualizarDots(){
+  for(var i=0;i<4;i++){
+    var dot=document.getElementById('pd'+i);
+    if(dot) dot.style.background=i<_pinBuffer.length?'#2563EB':'#E5E7EB';
+  }
+}
+
+function pinVerificar(){
+  if(_pinBuffer===PIN_PRESIDENTE){
+    document.getElementById('pin-ov').style.display='none';
+    _pinBuffer='';
+    _pinAtualizarDots();
+    // PIN correto: abre modal de confirmação com todos os dados
+    var t={
+      aprovar:'✅ Confirmar aprovação',
+      rejeitar:'❌ Confirmar rejeição',
+      revisar:'🔄 Solicitar revisão'
+    };
+    var d={
+      aprovar: _cDesc+'\n\n'+(_cForn?'Fornecedor: '+_cForn+'\n':'')+(_cVal?'Valor: '+_cVal+'\n':'')+'\nAo confirmar, um protocolo será gerado com data e hora.',
+      rejeitar: _cDesc+'\n\nO comprador será notificado para rever as cotações.',
+      revisar: _cDesc+'\n\nO comprador será notificado para enviar novas cotações.'
+    };
+    var cor={aprovar:'#16a34a',rejeitar:'var(--vm)',revisar:'var(--az3)'};
+    document.getElementById('conf-t').textContent=t[_cAcao];
+    document.getElementById('conf-d').textContent=d[_cAcao];
+    document.getElementById('conf-ok').style.background=cor[_cAcao];
+    document.getElementById('conf-ok').textContent={aprovar:'✅ Aprovar',rejeitar:'❌ Rejeitar',revisar:'🔄 Revisar'}[_cAcao];
+    document.getElementById('conf-ov').classList.add('on');
+  } else {
+    var erro=document.getElementById('pin-erro');
+    erro.style.display='block';
+    erro.style.animation='none';
+    setTimeout(function(){erro.style.animation='shake .3s';},10);
+    _pinBuffer='';
+    _pinAtualizarDots();
+  }
+}
+
+function salvarPin(){
+  var novo=(document.getElementById('cfg-pin-novo')||{value:''}).value.trim();
+  var conf=(document.getElementById('cfg-pin-conf')||{value:''}).value.trim();
+  if(!novo||novo.length<4||!/^\d+$/.test(novo)){alert('PIN deve ter 4 dígitos numéricos.');return;}
+  if(novo!==conf){alert('Os PINs não coincidem.');return;}
+  PIN_PRESIDENTE=novo;
+  try{localStorage.setItem('esp_pin',novo);}catch(e){}
+  document.getElementById('cfg-pin-novo').value='';
+  document.getElementById('cfg-pin-conf').value='';
+  suc('🔐','PIN atualizado!','O novo PIN do Presidente foi salvo com sucesso.\nCompartilhe apenas com ele.');
+}
+
+
 // DECISÃO
 function abrConf(acao,id,desc,val,forn){
-  _cAcao=acao;_cSolId=id;_cDesc=desc;
-  var t={
-    aprovar:'✅ Confirmar aprovação',
-    rejeitar:'❌ Confirmar rejeição',
-    revisar:'🔄 Solicitar revisão'
+  // Salva contexto da decisão
+  _cAcao=acao;_cSolId=id;_cDesc=desc;_cVal=val||'';_cForn=forn||'';
+  // Sempre exige PIN do Presidente antes de qualquer decisão
+  _pinBuffer='';
+  _pinAtualizarDots();
+  document.getElementById('pin-erro').style.display='none';
+  var labels={
+    aprovar:'✅ Confirmar APROVAÇÃO',
+    rejeitar:'❌ Confirmar REJEIÇÃO',
+    revisar:'🔄 Solicitar REVISÃO'
   };
-  var d={
-    aprovar: desc+'\n\n'+(forn?'Fornecedor: '+forn+'\n':'')+'Valor: '+val+'\n\nAo confirmar, um protocolo será gerado com data e hora.',
-    rejeitar: desc+'\n\nO comprador será notificado para rever as cotações.',
-    revisar: desc+'\n\nO comprador será notificado para enviar novas cotações.'
-  };
-  var cor={aprovar:'#16a34a',rejeitar:'var(--vm)',revisar:'var(--az3)'};
-  document.getElementById('conf-t').textContent=t[acao];
-  document.getElementById('conf-d').textContent=d[acao];
-  document.getElementById('conf-ok').style.background=cor[acao];
-  document.getElementById('conf-ok').textContent={aprovar:'✅ Aprovar',rejeitar:'❌ Rejeitar',revisar:'🔄 Revisar'}[acao];
-  document.getElementById('conf-ov').classList.add('on');
+  document.getElementById('pin-subtitulo').textContent=(labels[acao]||'Confirmar decisão');
+  document.getElementById('pin-ov').style.display='flex';
 }
 function fConf(e){if(e&&e.target!==document.getElementById('conf-ov'))return;document.getElementById('conf-ov').classList.remove('on');}
 async function confAcao(){
@@ -1695,10 +1822,28 @@ async function reenvWA(solId){
       var cots2=LOCAL_DATA.cotacoes.filter(function(c){return c.solicitacao_id===solId;});
       s=Object.assign({},s,{cotacoes:cots2});
     }
+    // Se estava em revisão ou rejeitado, voltar para pendente
+    var solOrig=LOCAL_DATA.solicitacoes.find(function(x){return x.id===solId;});
+    if(solOrig&&(solOrig.status==='revisao'||solOrig.status==='rejeitado')){
+      solOrig.status='pendente';
+      solOrig.observacao='';
+      solOrig.decidido_em=null;
+      solOrig.decidido_por=null;
+      solOrig.protocolo=null;
+      if(s) s=Object.assign({},s,{status:'pendente'});
+      await carregarPend();await carregarDash();
+      if(document.getElementById('aba-rev')&&document.getElementById('aba-rev').style.display!=='none') await carregarRev();
+    }
   } else {
     if(!sb)return;
     var r=await sb.from('solicitacoes').select('*,cotacoes(*)').eq('id',solId).single();
     s=r.data;
+    // Se estava em revisão ou rejeitado, voltar para pendente
+    if(s&&(s.status==='revisao'||s.status==='rejeitado')){
+      await sb.from('solicitacoes').update({status:'pendente',observacao:'',decidido_em:null,decidido_por:null,protocolo:null}).eq('id',solId);
+      await carregarPend();await carregarDash();
+      if(document.getElementById('aba-rev')&&document.getElementById('aba-rev').style.display!=='none') await carregarRev();
+    }
   }
   if(!s){alert('Solicitação não encontrada.');return;}
   var mn=Number(s.menor_valor)||0;
@@ -1875,7 +2020,7 @@ function rListaRev(contId,data){
         +(cots.length?'<table class="ct"><thead><tr><th>Fornecedor</th><th>Valor</th><th>Prazo</th><th>PDF</th></tr></thead><tbody>'+cotRows+'</tbody></table>':'')
         +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px">'
           +'<button class="bap" style="font-size:12px;padding:10px" onclick="event.stopPropagation();editarSolicitacao(\''+s.id+'\')">✏️ Editar e Reenviar</button>'
-          +'<button class="bre" style="font-size:12px;padding:10px" onclick="event.stopPropagation();abrConf(\'rejeitar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">❌ Rejeitar</button>'
+          +'<button class="bre" style="font-size:12px;padding:10px" onclick="event.stopPropagation();abrirPinModal(\'rejeitar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">❌ Rejeitar</button>'
         +'</div>'
         +'<button class="brv" style="width:100%;margin-top:7px;padding:10px;font-size:12px;background:#2563EB;color:#fff" onclick="event.stopPropagation();reenvWA(\''+s.id+'\')">📲 Reenviar ao Presidente via WhatsApp</button>'
       +'</div>';
@@ -1894,7 +2039,7 @@ async function kpiDrill(tipo){
     else {
       var now=new Date();
       var ini=new Date(now.getFullYear(),now.getMonth(),1).toISOString();
-      q=q.gte('criado_em',ini);
+      q=q.gte('criado_em',ini).in('status',['aprovado','auto-aprovado']);
     }
     var r=await q.order('criado_em',{ascending:false});
     data=r.data||[];
@@ -1906,7 +2051,7 @@ async function kpiDrill(tipo){
       if(tipo==='auto') return s.status==='auto-aprovado';
       var now=new Date();
       var dt=new Date(s.criado_em||'');
-      return dt.getMonth()===now.getMonth()&&dt.getFullYear()===now.getFullYear();
+      return (s.status==='aprovado'||s.status==='auto-aprovado')&&dt.getMonth()===now.getMonth()&&dt.getFullYear()===now.getFullYear();
     });
   }
   var tits={rej:'❌ Rejeitadas',rev:'🔄 Em Revisão',mes:'📅 Este Mês',aprov:'✅ Aprovadas',auto:'⚡ Auto-aprovadas'};
