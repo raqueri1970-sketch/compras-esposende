@@ -994,35 +994,47 @@ option{
   </div>
 
 <!-- MODAL PIN PRESIDENTE -->
-<div id="pin-ov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:350;align-items:center;justify-content:center" onclick="fPin(event)">
-  <div style="background:#fff;border-radius:24px;padding:1.8rem 1.5rem;width:min(92vw,360px);text-align:center;box-shadow:0 25px 60px rgba(0,0,0,.4)" onclick="event.stopPropagation()">
-    <div style="font-size:42px;margin-bottom:8px">&#128274;</div>
-    <div style="font-size:18px;font-weight:800;color:#111827;margin-bottom:4px">PIN da Presidência</div>
-    <div style="font-size:13px;color:#6B7280;margin-bottom:20px" id="pin-subtitulo">Digite o PIN para confirmar a decisão</div>
-    <div style="display:flex;justify-content:center;gap:12px;margin-bottom:20px">
-      <div style="width:14px;height:14px;border-radius:50%;background:#E5E7EB;transition:background .15s" id="pd0"></div>
-      <div style="width:14px;height:14px;border-radius:50%;background:#E5E7EB;transition:background .15s" id="pd1"></div>
-      <div style="width:14px;height:14px;border-radius:50%;background:#E5E7EB;transition:background .15s" id="pd2"></div>
-      <div style="width:14px;height:14px;border-radius:50%;background:#E5E7EB;transition:background .15s" id="pd3"></div>
+<style>
+#pin-ov{display:none;position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:rgba(0,0,0,.72);z-index:9999 !important;align-items:center;justify-content:center}
+#pin-ov.aberto{display:flex !important}
+#pin-box{background:#ffffff;border-radius:28px;padding:2rem 1.6rem 1.6rem;width:min(92vw,360px);text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.5);animation:pinPop .25s ease}
+@keyframes pinPop{from{transform:scale(.88);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}
+.pin-dot{width:16px;height:16px;border-radius:50%;background:#E5E7EB;transition:background .15s,transform .15s}
+.pin-dot.on{background:#2563EB;transform:scale(1.15)}
+.pin-key{padding:0;width:100%;aspect-ratio:1;font-size:22px;font-weight:700;background:#F8FAFC;border:2px solid #E2E8F0;border-radius:16px;cursor:pointer;color:#111827;transition:all .1s;font-family:inherit;display:flex;align-items:center;justify-content:center}
+.pin-key:active{background:#E0E7FF;border-color:#6366F1;transform:scale(.93)}
+.pin-key.del{background:#FEF3C7;border-color:#FDE68A;color:#92400E;font-size:18px}
+.pin-key.cancel{background:#FEE2E2;border-color:#FECACA;color:#991B1B;font-size:16px}
+</style>
+<div id="pin-ov" onclick="fPin(event)">
+  <div id="pin-box" onclick="event.stopPropagation()">
+    <div style="font-size:48px;margin-bottom:10px;line-height:1">🔐</div>
+    <div style="font-size:19px;font-weight:800;color:#111827;margin-bottom:6px">PIN da Presidência</div>
+    <div style="font-size:13px;color:#6B7280;margin-bottom:22px;min-height:18px" id="pin-subtitulo">Digite o PIN para confirmar a decisão</div>
+    <div style="display:flex;justify-content:center;gap:14px;margin-bottom:24px">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px">
-      <button onclick="pinDigit('1')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">1</button>
-      <button onclick="pinDigit('2')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">2</button>
-      <button onclick="pinDigit('3')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">3</button>
-      <button onclick="pinDigit('4')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">4</button>
-      <button onclick="pinDigit('5')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">5</button>
-      <button onclick="pinDigit('6')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">6</button>
-      <button onclick="pinDigit('7')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">7</button>
-      <button onclick="pinDigit('8')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">8</button>
-      <button onclick="pinDigit('9')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">9</button>
-      <button onclick="pinApagar()" style="padding:16px;font-size:16px;font-weight:700;background:#FEF3C7;border:1.5px solid #FDE68A;border-radius:14px;cursor:pointer;color:#92400E">&#9003;</button>
-      <button onclick="pinDigit('0')" style="padding:16px;font-size:20px;font-weight:700;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:14px;cursor:pointer;color:#111827">0</button>
-      <button onclick="fPin()" style="padding:16px;font-size:14px;font-weight:700;background:#FEE2E2;border:1.5px solid #FECACA;border-radius:14px;cursor:pointer;color:#991B1B">&#x2715;</button>
+      <button class="pin-key" onclick="pinDigit('1')">1</button>
+      <button class="pin-key" onclick="pinDigit('2')">2</button>
+      <button class="pin-key" onclick="pinDigit('3')">3</button>
+      <button class="pin-key" onclick="pinDigit('4')">4</button>
+      <button class="pin-key" onclick="pinDigit('5')">5</button>
+      <button class="pin-key" onclick="pinDigit('6')">6</button>
+      <button class="pin-key" onclick="pinDigit('7')">7</button>
+      <button class="pin-key" onclick="pinDigit('8')">8</button>
+      <button class="pin-key" onclick="pinDigit('9')">9</button>
+      <button class="pin-key del" onclick="pinApagar()">⌫</button>
+      <button class="pin-key" onclick="pinDigit('0')">0</button>
+      <button class="pin-key cancel" onclick="fPin()">✕</button>
     </div>
-    <div id="pin-erro" style="display:none;color:#DC2626;font-size:13px;font-weight:700;margin-top:4px">&#10060; PIN incorreto. Tente novamente.</div>
+    <div id="pin-erro" style="display:none;color:#DC2626;font-size:13px;font-weight:700;margin-top:6px;padding:8px;background:#FEF2F2;border-radius:8px">❌ PIN incorreto. Tente novamente.</div>
   </div>
 </div>
-<style>@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}</style>
 <!-- CONFIRM -->
 <div class="conf-ov" id="conf-ov" onclick="fConf(event)">
   <div class="conf-sh" onclick="event.stopPropagation()">
@@ -1685,12 +1697,12 @@ function abrirPinModal(acao,id,desc,val,forn){
     revisar:'🔄 Solicitar REVISÃO'
   };
   document.getElementById('pin-subtitulo').textContent=(labels[acao]||'Confirmar decisão');
-  document.getElementById('pin-ov').style.display='flex';
+  document.getElementById('pin-ov').classList.add('aberto');
 }
 
 function fPin(e){
   if(e&&e.target!==document.getElementById('pin-ov'))return;
-  document.getElementById('pin-ov').style.display='none';
+  document.getElementById('pin-ov').classList.remove('aberto');
   _pinBuffer='';
   _pinAtualizarDots();
 }
@@ -1717,7 +1729,7 @@ function _pinAtualizarDots(){
 
 function pinVerificar(){
   if(_pinBuffer===PIN_PRESIDENTE){
-    document.getElementById('pin-ov').style.display='none';
+    document.getElementById('pin-ov').classList.remove('aberto');
     _pinBuffer='';
     _pinAtualizarDots();
     // PIN correto: abre modal de confirmação com todos os dados
@@ -1774,7 +1786,7 @@ function abrConf(acao,id,desc,val,forn){
     revisar:'🔄 Solicitar REVISÃO'
   };
   document.getElementById('pin-subtitulo').textContent=(labels[acao]||'Confirmar decisão');
-  document.getElementById('pin-ov').style.display='flex';
+  document.getElementById('pin-ov').classList.add('aberto');
 }
 function fConf(e){if(e&&e.target!==document.getElementById('conf-ov'))return;document.getElementById('conf-ov').classList.remove('on');}
 async function confAcao(){
