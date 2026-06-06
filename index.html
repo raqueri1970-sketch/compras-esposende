@@ -235,10 +235,26 @@ textarea.fi{resize:vertical;min-height:60px}
   .w{padding:0;max-width:100%}
   .sc{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
 }
-@media(max-width:420px){
-  .cot-g{grid-template-columns:1fr}
-  .r2{grid-template-columns:1fr}
-  .dh-val{font-size:22px}
+@media(max-width:520px){
+  .cot-g{grid-template-columns:1fr!important}
+  .r2{grid-template-columns:1fr!important}
+  .d3{grid-template-columns:1fr 1fr!important}
+  .dh-val{font-size:20px}
+  .nav{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .na{padding:10px 10px;font-size:11px}
+  .fi{font-size:16px!important;padding:10px 12px!important}
+  .bsend,.bap,.bre,.brv{padding:14px!important;font-size:14px!important;min-height:48px}
+  .cc select,.cc input{font-size:16px!important;padding:8px!important}
+  .pdf-u{min-height:44px;font-size:12px}
+  .kpi3{grid-template-columns:1fr 1fr 1fr}
+  .w{padding:.6rem .6rem 6rem}
+  /* Modal pedido mobile */
+  .pc-wrap{border-radius:0!important;max-height:100vh!important;overflow-y:auto!important}
+  .pc-toolbar{flex-wrap:wrap;gap:5px;padding:8px 10px}
+  .pc-tbtn{padding:6px 8px;font-size:10px}
+  /* PIN mobile */
+  #pin-box{width:min(96vw,360px)!important}
+  .pin-key{font-size:20px}
 }
 
 /* ===== POPUP EXECUTIVO ===== */
@@ -422,12 +438,12 @@ option{
 </div>
 <div class="nav">
   <div class="na on" id="na-dash" onclick="irAba('dash',this)">📊 Dashboard</div>
+  <div class="na" id="na-nova" onclick="irAba('nova',this)">➕ Nova</div>
   <div class="na" id="na-pend" onclick="irAba('pend',this)">⏳ Pendentes <span class="na-n" id="cnt-p">0</span></div>
   <div class="na" id="na-aprov" onclick="irAba('aprov',this)">✅ Aprovados</div>
   <div class="na" id="na-rev" onclick="irAba('rev',this)">🔄 Revisão <span class="na-n" id="cnt-rev" style="background:rgba(245,158,11,.2);color:#F59E0B">0</span></div>
   <div class="na" id="na-ped" onclick="irAba('ped',this)">📋 Pedidos <span class="na-n" id="cnt-ped" style="background:rgba(37,99,235,.2);color:#60A5FA">0</span></div>
   <div class="na" id="na-rel" onclick="irAba('rel',this)">📊 Relatório</div>
-  <div class="na" id="na-nova" onclick="irAba('nova',this)">➕ Nova</div>
   <div class="na" id="na-admin" onclick="irAba('admin',this)">⚙️ Admin</div>
 </div>
 
@@ -714,7 +730,7 @@ option{
               oninput="onFCCustom(0)" onfocus="if(this.value)document.getElementById('fn0').value=''">
           </div>
           <div class="forn-info" id="fi0"></div>
-          <input id="vl0" placeholder="R$ valor" oninput="rc()">
+          <input id="vl0" placeholder="R$ valor" oninput="rc()" onchange="rc()" inputmode="decimal" type="text">
           <select id="pr0" style="width:100%;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:5px 7px;font-size:11px;font-family:inherit;background:#fff;margin-top:2px;color:#111"><option value="">Prazo pag.</option><option>À Vista</option><option>7 dias</option><option>14 dias</option><option>15 dias</option><option>21 dias</option><option>28 dias</option><option>30 dias</option><option>45 dias</option><option>60 dias</option><option>90 dias</option><option>120 dias</option><option>15/30</option><option>15/30/45</option><option>30/60</option><option>30/60/90</option><option>30/60/90/120</option><option>45/90</option><option>60/90</option><option>Entrada + 30</option><option>Entrada + 30/60</option><option>Entrada + 30/60/90</option></select>
           <label class="pdf-u" id="pu0">📎 PDF<input type="file" accept=".pdf,image/*" id="pf0" onchange="mkP(0)"></label>
         </div>
@@ -872,7 +888,7 @@ option{
               oninput="onFCCustom(1)" onfocus="if(this.value)document.getElementById('fn1').value=''">
           </div>
           <div class="forn-info" id="fi1"></div>
-          <input id="vl1" placeholder="R$ valor" oninput="rc()">
+          <input id="vl1" placeholder="R$ valor" oninput="rc()" onchange="rc()" inputmode="decimal" type="text">
           <select id="pr1" style="width:100%;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:5px 7px;font-size:11px;font-family:inherit;background:#fff;margin-top:2px;color:#111"><option value="">Prazo pag.</option><option>À Vista</option><option>7 dias</option><option>14 dias</option><option>15 dias</option><option>21 dias</option><option>28 dias</option><option>30 dias</option><option>45 dias</option><option>60 dias</option><option>90 dias</option><option>120 dias</option><option>15/30</option><option>15/30/45</option><option>30/60</option><option>30/60/90</option><option>30/60/90/120</option><option>45/90</option><option>60/90</option><option>Entrada + 30</option><option>Entrada + 30/60</option><option>Entrada + 30/60/90</option></select>
           <label class="pdf-u" id="pu1">📎 PDF<input type="file" accept=".pdf,image/*" id="pf1" onchange="mkP(1)"></label>
         </div>
@@ -1030,7 +1046,7 @@ option{
               oninput="onFCCustom(2)" onfocus="if(this.value)document.getElementById('fn2').value=''">
           </div>
           <div class="forn-info" id="fi2"></div>
-          <input id="vl2" placeholder="R$ valor" oninput="rc()">
+          <input id="vl2" placeholder="R$ valor" oninput="rc()" onchange="rc()" inputmode="decimal" type="text">
           <select id="pr2" style="width:100%;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:5px 7px;font-size:11px;font-family:inherit;background:#fff;margin-top:2px;color:#111"><option value="">Prazo pag.</option><option>À Vista</option><option>7 dias</option><option>14 dias</option><option>15 dias</option><option>21 dias</option><option>28 dias</option><option>30 dias</option><option>45 dias</option><option>60 dias</option><option>90 dias</option><option>120 dias</option><option>15/30</option><option>15/30/45</option><option>30/60</option><option>30/60/90</option><option>30/60/90/120</option><option>45/90</option><option>60/90</option><option>Entrada + 30</option><option>Entrada + 30/60</option><option>Entrada + 30/60/90</option></select>
           <label class="pdf-u" id="pu2">📎 PDF<input type="file" accept=".pdf,image/*" id="pf2" onchange="mkP(2)"></label>
         </div>
@@ -1041,7 +1057,7 @@ option{
         <div class="eco-r t"><span>Economia potencial</span><span id="ef-eco"></span></div>
       </div>
       <div class="al5k" id="al5k">⚠️ Valor acima de R$ 5.000 — irá para aprovação da Presidência (Paulo).</div>
-      <button class="bsend" id="btn-env" onclick="enviar()">Enviar solicitação →</button>
+      <button class="bsend" id="btn-env" onclick="enviar()" ontouchstart="">Enviar solicitação →</button>
     </div>
   </div>
   <div class="card">
@@ -1085,6 +1101,7 @@ option{
       <option value="aguardando">⏳ Aguardando Entrega</option>
       <option value="recebido">📦 Recebido</option>
       <option value="finalizado">✅ Finalizado</option>
+      <option value="cancelado">❌ Cancelado</option>
     </select>
   </div>
   <!-- Cards clicáveis por status -->
@@ -1762,6 +1779,13 @@ async function enviar(){
     var fn=getFornNome(i);
     var vl=pBR(document.getElementById('vl'+i).value);
     if(fn&&vl>0) cots.push({fornecedor:fn,valor:vl,prazo:(document.getElementById('pr'+i).value||'').trim(),pdf_url:null,_f:document.getElementById('pf'+i).files[0]||null,_blobIdx:i});
+  }
+  // Garantir que campos custom de fornecedor são considerados
+  for(var _i=0;_i<3;_i++){
+    var _cust=document.getElementById('fn'+_i+'_custom');
+    if(_cust&&_cust.value.trim()&&!document.getElementById('fn'+_i).value){
+      // campo custom preenchido — já tratado pelo getFornNome
+    }
   }
   if(cots.length<1){alert('Informe pelo menos 1 cotação.');return;}
   var mn=Math.min.apply(null,cots.map(function(c){return c.valor;}));
@@ -2453,6 +2477,7 @@ function renderCardsPedidoStatus(){
     {key:'aguardando',label:'Ag. Entrega',     cor:'#F59E0B',bg:'rgba(245,158,11,.15)', ico:'⏳'},
     {key:'recebido',  label:'Recebido',        cor:'#A78BFA',bg:'rgba(167,139,250,.15)',ico:'📦'},
     {key:'finalizado',label:'Finalizado',      cor:'#64748B',bg:'rgba(100,116,139,.15)',ico:'✅'},
+    {key:'cancelado', label:'Cancelado',       cor:'#EF4444',bg:'rgba(239,68,68,.15)',  ico:'❌'},
   ];
   var filtroAtual=(document.getElementById('ped-filtro-status')||{value:''}).value;
   cont.innerHTML='';
@@ -2543,6 +2568,46 @@ function selecionarSugestaoRel(campo,val){
   var cont=document.getElementById('rel-'+campo+'-sug'); if(cont) cont.style.display='none';
 }
 
+
+// ============================================================
+// CANCELAR PEDIDO
+// ============================================================
+function cancelarPedido(pcNum){
+  var p=_pedidos.find(function(x){return x.pc_num===pcNum;});
+  if(!p) return;
+  // Popup de confirmação
+  var modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML='<div style="background:#fff;border-radius:20px;padding:1.75rem 1.4rem;max-width:340px;width:90%;text-align:center;animation:pop .3s ease">'
+    +'<div style="font-size:44px;margin-bottom:10px">❌</div>'
+    +'<div style="font-size:17px;font-weight:800;color:#111827;margin-bottom:6px">Cancelar Pedido</div>'
+    +'<div style="font-size:12px;color:#6B7280;margin-bottom:6px;line-height:1.5"><strong>'+esc(p.pc_num)+'</strong><br>'+esc(p.descricao||'')+'</div>'
+    +'<div style="font-size:11px;color:#EF4444;margin-bottom:18px;padding:8px;background:#FEF2F2;border-radius:8px">⚠️ Esta ação não pode ser desfeita.<br>O pedido será marcado como cancelado.</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +'<button id="btn-cancel-nao" style="background:#F1F5F9;color:#374151;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Voltar</button>'
+    +'<button id="btn-cancel-sim" style="background:#EF4444;color:#fff;border:none;border-radius:10px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">❌ Cancelar</button>'
+    +'</div></div>';
+  document.body.appendChild(modal);
+  modal.querySelector('#btn-cancel-nao').addEventListener('click',function(){modal.remove();});
+  modal.querySelector('#btn-cancel-sim').addEventListener('click',function(){
+    modal.remove();
+    p.status='cancelado';
+    p.cancelado_em=new Date().toISOString();
+    atualizarBaseRelatorio();
+    renderCardsPedidoStatus();
+    renderPedidos();
+    atualizarContadorPed();
+    // Fechar modal do pedido se estiver aberto
+    var pcModal=document.getElementById('pc-modal');
+    if(pcModal) pcModal.classList.remove('on');
+    suc('❌','Pedido Cancelado',p.pc_num+'\n'+esc(p.descricao||'')+'\nO pedido foi cancelado com sucesso.');
+  });
+}
+
+function _cancelarPedidoAberto(){
+  if(!_pcAtual) return;
+  cancelarPedido(_pcAtual.pc_num);
+}
 // DRAG DROP
 var dz=document.getElementById('dz');
 if(dz){
@@ -3082,6 +3147,7 @@ async function imprimirRelatorio(){
       <button class="pc-tbtn primary" onclick="gerarPDFPedido()">📄 PDF</button>
       <button class="pc-tbtn primary" onclick="imprimirPedido()">🖨️ Imprimir</button>
       <button class="pc-tbtn danger" onclick="fecharPedido()">✕ Fechar</button>
+      <button class="pc-tbtn" onclick="_cancelarPedidoAberto()" style="background:rgba(239,68,68,.25);border-color:rgba(239,68,68,.5);color:#FCA5A5">❌ Cancelar Pedido</button>
     </div>
     <div class="pc-doc" id="pc-doc">
       <!-- conteúdo gerado dinamicamente -->
@@ -3200,7 +3266,17 @@ async function gerarPedidoAutomatico(solId, aprNum, protocolo){
 
   _pedidos.push(pedido);
   _pcAtual = pedido;
-  atualizarContadorPed();
+
+  // FORÇAR APARIÇÃO IMEDIATA DO PEDIDO
+  try{
+    if(typeof renderPedidos==='function') renderPedidos();
+    if(typeof renderCardsPedidoStatus==='function') renderCardsPedidoStatus();
+    if(typeof atualizarContadorPed==='function') atualizarContadorPed();
+    if(typeof renderDocPedido==='function') renderDocPedido(pedido);
+    console.log('PEDIDO GERADO:', pedido.pc_num, pedido);
+  }catch(e){
+    console.error('Erro ao atualizar pedido:',e);
+  }
 }
 
 function gerarNumAPR(){
@@ -3784,12 +3860,26 @@ function fecharReativarModal(){
 function reativarPedido(){
   var modal=document.getElementById('reativar-modal');
   if(modal) modal.remove();
+
   if(!_pcAtual) return;
-  _pcAtual.status='recebido'; // volta para recebido para poder finalizar novamente
-  renderDocPedido(_pcAtual);
-  renderPedidos();
-  renderCardsPedidoStatus();
-  suc('🔄','Pedido Reativado!',_pcAtual.pc_num+'\nStatus retornado para: 📦 Recebido\nVocê pode editar e salvar novamente.');
+
+  _pcAtual.status='emitido';
+  _pcAtual.cancelado_em=null;
+  _pcAtual.reativado_em=new Date().toISOString();
+
+  try{
+    atualizarBaseRelatorio();
+    renderDocPedido(_pcAtual);
+    renderPedidos();
+    renderCardsPedidoStatus();
+    atualizarContadorPed();
+  }catch(e){console.log(e);}
+
+  suc(
+    '🔄',
+    'Pedido Reativado!',
+    _pcAtual.pc_num + '\nStatus voltou para: Emitido\nPode editar e salvar novamente.'
+  );
 }
 
 // =============================================
@@ -3821,11 +3911,11 @@ function renderPedidos(){
   var filtroStatus = (document.getElementById('ped-filtro-status')||{value:''}).value;
   var lista = _pedidos.filter(function(p){
     if(filtroStatus){ if(p.status!==filtroStatus) return false; }
-    else { if(!busca && p.status==='finalizado') return false; }
+    else { if(!busca && (p.status==='finalizado'||p.status==='cancelado')) return false; }
     if(busca && !(p.pc_num+p.descricao+(p.fornecedor||'')+(p.forn_razao||'')+(p.area||'')+(p.solicitante||'')+(p.apr_num||'')).toLowerCase().includes(busca)) return false;
     return true;
   });
-  var ordemStatus={emitido:0,enviado:1,aguardando:2,recebido:3,finalizado:4};
+  var ordemStatus={emitido:0,enviado:1,aguardando:2,recebido:3,finalizado:4,cancelado:5};
   lista.sort(function(a,b){return (ordemStatus[a.status]||0)-(ordemStatus[b.status]||0);});
   if(!lista.length){
     var msgEmpty=filtroStatus
@@ -3840,7 +3930,8 @@ function renderPedidos(){
     enviado:   {label:'Enviado ao Forn.',  cor:'#15803D',bg:'#F0FDF4',borda:'#22C55E',prox:'Confirmar Entrega'},
     aguardando:{label:'Ag. Entrega',       cor:'#92400E',bg:'#FEF9C3',borda:'#F59E0B',prox:'Confirmar Recebimento'},
     recebido:  {label:'Recebido',          cor:'#7C3AED',bg:'#F3E8FF',borda:'#A78BFA',prox:'Finalizar'},
-    finalizado:{label:'Finalizado',        cor:'#334155',bg:'#F1F5F9',borda:'#64748B',prox:null}
+    finalizado:{label:'Finalizado',        cor:'#334155',bg:'#F1F5F9',borda:'#64748B',prox:null},
+    cancelado: {label:'Cancelado',         cor:'#991B1B',bg:'#FEF2F2',borda:'#EF4444',prox:null}
   };
   cont.innerHTML='';
   lista.forEach(function(p){
@@ -3848,7 +3939,10 @@ function renderPedidos(){
     var card=document.createElement('div');
     card.className='sc ba'; card.style.borderLeft='4px solid '+si.borda;
     card.setAttribute('data-pcnum',p.pc_num); card.style.cursor='pointer';
-    card.addEventListener('click',function(){abrirPedidoExistente(this.getAttribute('data-pcnum'));});
+    card.addEventListener('click',function(e){
+      if(e.target.classList.contains('pc-cancelar-btn')){e.stopPropagation();cancelarPedido(this.getAttribute('data-pcnum'));return;}
+      abrirPedidoExistente(this.getAttribute('data-pcnum'));
+    });
     var prazoHtml='';
     if(p.prazo_entrega&&p.status!=='finalizado'){
       var dt=new Date(p.prazo_entrega+'T12:00:00');
@@ -3884,7 +3978,9 @@ function renderPedidos(){
         +'<div><span style="color:#94A3B8">Forn: </span><strong style="color:#F1F5F9">'+esc(p.forn_razao||p.fornecedor||'—')+'</strong>'
           +(p.forn_cnpj?'<span style="color:#64748B;font-size:9px;margin-left:8px">CNPJ: '+esc(p.forn_cnpj)+'</span>':'')
         +'</div>'
-        +'<div style="display:flex;align-items:center;gap:8px">'+acaoHtml+'<span style="color:#60A5FA;font-size:10px;font-weight:700">📋 Abrir</span></div>'
+        +'<div style="display:flex;align-items:center;gap:8px">'+acaoHtml+'<span style="color:#60A5FA;font-size:10px;font-weight:700;cursor:pointer">📋 Abrir</span>'
+        +(p.status!=='cancelado'?'<span class="pc-cancelar-btn" style="color:#EF4444;font-size:10px;font-weight:700;cursor:pointer;padding:2px 8px;border-radius:6px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08)">❌ Cancelar</span>':'<span style="color:#64748B;font-size:9px">Cancelado</span>')
+        +'</div>'
       +'</div>';
     cont.appendChild(card);
   });
@@ -3904,3 +4000,15 @@ function abrirPedidoExistente(pcNum){
 </script>
 </body>
 </html>
+
+
+<script>
+function atualizarTudoPedidos(){
+ try{
+   if(typeof renderPedidos==='function') renderPedidos();
+   if(typeof renderCardsPedidoStatus==='function') renderCardsPedidoStatus();
+   if(typeof atualizarContadorPed==='function') atualizarContadorPed();
+   if(typeof atualizarDashboard==='function') atualizarDashboard();
+ }catch(e){console.log(e);}
+}
+</script>
