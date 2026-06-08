@@ -3360,9 +3360,10 @@ async function abrirGerarPedido(solId){
   _pedidos.push(pedido);
   _pcAtual = pedido;
   atualizarContadorPed();
+  renderPedidos();
   renderDocPedido(pedido);
   document.getElementById('pc-modal').classList.add('on');
-}
+ }
 
 function fecharPedido(){
   document.getElementById('pc-modal').classList.remove('on');
