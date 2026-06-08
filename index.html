@@ -3814,18 +3814,31 @@ function salvarPedido(){
   _coletarCamposPedido();
   // Avançar status automaticamente
   var statusAnterior=_pcAtual.status;
-  var proximoStatus=_PROX_STATUS[statusAnterior]||statusAnterior;
-  _pcAtual.status=proximoStatus;
-  _pcAtual.salvo_em=new Date().toISOString();
-  // Atualizar tudo
+var proximoStatus=_PROX_STATUS[statusAnterior]||statusAnterior;
+
+if(statusAnterior==='recebido'){
+    _pcAtual.status='finalizado';
+}else{
+    _pcAtual.status=proximoStatus;
+}
+
+_pcAtual.salvo_em=new Date().toISOString();
+    // Atualizar tudo
   atualizarBaseRelatorio();
   renderDocPedido(_pcAtual);
   renderPedidos();
   renderCardsPedidoStatus();
   atualizarContadorPed();
   // Salvar no Supabase se conectado
-  if(!MODO_LOCAL&&sb&&_pcAtual.sol_id){
-    sb.from('solicitacoes').update({pc_status:proximoStatus,pc_num:_pcAtual.pc_num}).eq('id',_pcAtual.sol_id).then(function(){});
+  if(!MODO_LOCAL && sb && _pcAtual.sol_id){
+    sb.from('solicitacoes')
+      .update({
+          pc_status: _pcAtual.status,
+          pc_num: _pcAtual.pc_num
+      })
+      .eq('id', _pcAtual.sol_id)
+      .then(function(){});
+}
   }
   var msgStatus=_STATUS_LABEL[proximoStatus]||proximoStatus;
   var msgAntes=_STATUS_LABEL[statusAnterior]||statusAnterior;
