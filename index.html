@@ -431,7 +431,24 @@ option{
   <span style="font-size:18px">🗄️</span>
   <div style="flex:1">
     <div style="font-size:12px;font-weight:700;color:#991B1B">Tabelas do banco não encontradas</div>
-    <div style="font-size:10px;color:#7F1D1D;margin-top:1px">Execute o SQL no Supabase → SQL Editor para criar as tabelas solicitacoes, cotacoes e decisoes.</div>
+    <div style="font-size:10px;color:#7F1D1D;margin-top:1px">Execute o SQL no Supabase → SQL Editor para criar as tabelas solicitacoes, cotacoes, decisoes e <strong>pedidos_compra</strong>.<br><br>
+    <code style="background:#FEE2E2;padding:3px 6px;border-radius:4px;font-size:9px;display:block;margin-top:4px;white-space:pre-wrap">CREATE TABLE IF NOT EXISTS pedidos_compra (
+  pc_num TEXT PRIMARY KEY,
+  sol_id TEXT, sol_num TEXT, apr_num TEXT,
+  status TEXT DEFAULT 'emitido',
+  emitido_em TIMESTAMPTZ, salvo_em TIMESTAMPTZ,
+  area TEXT, categoria TEXT, destino TEXT,
+  solicitante TEXT, justificativa TEXT, descricao TEXT,
+  fornecedor TEXT, forn_razao TEXT, forn_cnpj TEXT,
+  forn_contato TEXT, forn_tel TEXT, forn_email TEXT,
+  valor NUMERIC, valor_original NUMERIC,
+  prazo_pag TEXT, prazo_pag_livre TEXT, prazo_pag_original TEXT,
+  prazo_entrega TEXT, prazo_entrega_original TEXT,
+  local_entrega TEXT, resp_recebimento TEXT,
+  garantia TEXT, obs TEXT,
+  historico_revisao TEXT DEFAULT '[]',
+  cancelado_em TIMESTAMPTZ, reativado_em TIMESTAMPTZ
+);</code></div>
   </div>
   <button onclick="document.getElementById('aviso-tabelas').style.display='none'"
     style="background:#EF4444;border:none;border-radius:6px;padding:4px 10px;font-weight:700;cursor:pointer;font-size:11px;color:#fff">✕</button>
@@ -1345,6 +1362,12 @@ var SB_PRONTO = false;
     var lbl=document.getElementById('conn-lbl');
     if(dot) dot.className='conn-dot ok';
     if(lbl) lbl.textContent='Conectado';
+    // Sincronizar pedidos com Supabase ao conectar
+    carregarPedidosSupabase().then(function(){
+      renderPedidos();
+      renderCardsPedidoStatus();
+      atualizarContadorPed();
+    });
     // Recarregar dashboard agora que conectou
     var abaAtiva = document.querySelector('.na.on');
     if(abaAtiva) {
@@ -1366,6 +1389,9 @@ var SB_PRONTO = false;
 
   testarConexao();
   setPeriodo(30);
+  // ── Carregar pedidos do localStorage imediatamente (antes do Supabase)
+  carregarPedidosLocal();
+  atualizarContadorPed();
 })();
 
 function mostrarAvisoServidor(){
@@ -1399,7 +1425,7 @@ function irAba(id,el){
   if(id==='pend') carregarPend();
   if(id==='aprov') carregarAprov();
   if(id==='rev') carregarRev();
-  if(id==='ped') carregarPedidos();
+  if(id==='ped') { carregarPedidos(); inicializarPedidos(); }
   if(id==='rel') carregarRelatorio();
 }
 
@@ -1475,6 +1501,7 @@ async function carregarDash(){
   if(ini) q=q.gte('criado_em',ini+'T00:00:00');
   if(fim) q=q.lte('criado_em',fim+'T23:59:59');
   var r=await q;
+  if(r.error){ console.error('carregarDash erro:',r.error.message); return; }
   var data=r.data||[];
   var aprov=data.filter(function(d){return d.status==='aprovado'||d.status==='auto-aprovado';});
   var pend=data.filter(function(d){return d.status==='pendente';});
@@ -1545,13 +1572,35 @@ async function carregarPend(){
     rLista('lista-pend', dados, 'pend');
     return;
   }
-  var r=await sb.from('solicitacoes').select('*,cotacoes(*)').eq('status','pendente').order('criado_em',{ascending:false});
-  var data=r.data||[];
-  document.getElementById('kp-n').textContent=data.length;
-  document.getElementById('kp-eco').textContent=data.length?fBRk(data.reduce(function(a,d){return a+(Number(d.economia)||0);},0)):'—';
-  document.getElementById('kp-val').textContent=data.length?fBRk(data.reduce(function(a,d){return a+(Number(d.menor_valor)||0);},0)):'—';
-  document.getElementById('cnt-p').textContent=data.length;
-  rLista('lista-pend',data,'pend');
+  try{
+    // Buscar solicitações pendentes
+    var rSols = await sb.from('solicitacoes').select('*').eq('status','pendente').order('criado_em',{ascending:false});
+    if(rSols.error) throw new Error(rSols.error.message);
+    var sols = rSols.data||[];
+
+    // Buscar cotações separadamente (evita limite de rows do join)
+    var ids = sols.map(function(s){return s.id;});
+    var data = sols;
+    if(ids.length > 0){
+      var rCots = await sb.from('cotacoes').select('*').in('solicitacao_id', ids);
+      var cots = (rCots.error ? [] : rCots.data)||[];
+      // Associar cotações manualmente
+      data = sols.map(function(s){
+        return Object.assign({},s,{cotacoes: cots.filter(function(c){return c.solicitacao_id===s.id;})});
+      });
+    } else {
+      data = sols.map(function(s){ return Object.assign({},s,{cotacoes:[]}); });
+    }
+
+    document.getElementById('kp-n').textContent=data.length;
+    document.getElementById('kp-eco').textContent=data.length?fBRk(data.reduce(function(a,d){return a+(Number(d.economia)||0);},0)):'—';
+    document.getElementById('kp-val').textContent=data.length?fBRk(data.reduce(function(a,d){return a+(Number(d.menor_valor)||0);},0)):'—';
+    document.getElementById('cnt-p').textContent=data.length;
+    rLista('lista-pend',data,'pend');
+  }catch(e){
+    console.error('carregarPend erro:',e);
+    document.getElementById('lista-pend').innerHTML='<div class="empty-msg" style="color:#EF4444">Erro ao carregar: '+e.message+'</div>';
+  }
 }
 
 // APROVADOS
@@ -1564,9 +1613,27 @@ async function carregarAprov(){
     renderAprovados();
     return;
   }
-  var r=await sb.from('solicitacoes').select('*,cotacoes(*)').in('status',['aprovado','auto-aprovado']).order('decidido_em',{ascending:false});
-  _aprovTodos=r.data||[];
-  renderAprovados();
+  try{
+    // Buscar aprovados separadamente (evita bug do .in() com join)
+    var rSols = await sb.from('solicitacoes').select('*').in('status',['aprovado','auto-aprovado']).order('decidido_em',{ascending:false});
+    if(rSols.error) throw new Error(rSols.error.message);
+    var sols = rSols.data||[];
+
+    var ids = sols.map(function(s){return s.id;});
+    if(ids.length > 0){
+      var rCots = await sb.from('cotacoes').select('*').in('solicitacao_id', ids);
+      var cots = (rCots.error ? [] : rCots.data)||[];
+      _aprovTodos = sols.map(function(s){
+        return Object.assign({},s,{cotacoes: cots.filter(function(c){return c.solicitacao_id===s.id;})});
+      });
+    } else {
+      _aprovTodos = [];
+    }
+    renderAprovados();
+  }catch(e){
+    console.error('carregarAprov erro:',e);
+    document.getElementById('lista-aprov').innerHTML='<div class="empty-msg" style="color:#EF4444">Erro ao carregar aprovados: '+e.message+'</div>';
+  }
 }
 function renderAprovados(){
   var b=(document.getElementById('aprov-busca').value||'').toLowerCase();
@@ -1579,121 +1646,138 @@ function renderAprovados(){
 // RENDER LISTA
 function rLista(contId,data,tipo){
   var cont=document.getElementById(contId);
-  if(!data.length){
+  if(!cont) return;
+  // Filtrar itens nulos/undefined
+  var dataLimpa=(data||[]).filter(function(s){return s&&s.id;});
+  if(!dataLimpa.length){
     cont.innerHTML='<div class="empty-msg">'+(tipo==='pend'?'Nenhuma pendência.':'Nenhum registro.')+'</div>';
     return;
   }
   cont.innerHTML='';
-  data.forEach(function(s){
-    var mn=Number(s.menor_valor)||0,mx=Number(s.maior_valor)||0,eco=Number(s.economia)||0;
-    var ecoPct=mx>0?(eco/mx*100).toFixed(1):'0';
-    var cots=s.cotacoes||[];
-    var bcls=tipo==='pend'?'bp':(s.status==='auto-aprovado'?'bauto':'ba');
+  dataLimpa.forEach(function(s){
+    try{
+      var mn=Number(s.menor_valor)||0,mx=Number(s.maior_valor)||0,eco=Number(s.economia)||0;
+      var ecoPct=mx>0?(eco/mx*100).toFixed(1):'0';
+      // Garantir cotacoes é array limpo
+      var cots=(Array.isArray(s.cotacoes)?s.cotacoes:[]).filter(function(c){return c&&typeof c==='object';});
+      var bcls=tipo==='pend'?'bp':(s.status==='auto-aprovado'?'bauto':'ba');
 
-    // Card principal
-    var card=document.createElement('div');
-    card.className='sc '+bcls;
-    card.setAttribute('data-id',s.id);
+      var card=document.createElement('div');
+      card.className='sc '+bcls;
+      card.setAttribute('data-id',s.id);
 
-    var pillHtml=tipo==='pend'?'<span class="pill pp">⏳ Pendente</span>':
-      (s.status==='auto-aprovado'?'<span class="pill pau">⚡ Auto</span>':'<span class="pill pa">✅ Aprovado</span>');
+      var pillHtml=tipo==='pend'?'<span class="pill pp">⏳ Pendente</span>':
+        (s.status==='auto-aprovado'?'<span class="pill pau">⚡ Auto</span>':'<span class="pill pa">✅ Aprovado</span>');
 
-    card.innerHTML=
-      '<div class="sc-hd">'
-      +'<div><div class="sc-id">'+esc(s.id)+' · '+fData(s.criado_em)+'</div>'
-      +'<div class="sc-desc">'+esc(s.descricao||'')+'</div>'
-      +'<div class="sc-meta"><span>🏢 '+esc(s.area||'—')+'</span>'
-      +(s.destino?'<span>📍 '+esc(s.destino)+'</span>':'')
-      +'<span>👤 '+esc(s.solicitante||'')+'</span></div>'
-      +(s.protocolo&&tipo==='aprov'?'<div style="font-size:9px;color:#60A5FA;font-weight:700;margin-top:2px">📋 '+esc(s.protocolo)+' · ✅ '+fDataHora(s.decidido_em)+'</div>':'')
-      +'</div>'
-      +'<div><div class="sc-val">'+fBRk(mn)+'</div>'
-      +(eco>0?'<div class="sc-eco">Econ. '+fBRk(eco)+'</div>':'')
-      +'<div style="margin-top:4px">'+pillHtml+'</div></div></div>'
-      +'<div class="sc-ft"><div>Menor: <strong>'+esc(s.menor_fornecedor||'—')+' — '+fBR(mn)+'</strong></div>'
-      +'<div style="color:#E2E8F0">'+cots.length+' cot. ▾</div></div>';
+      card.innerHTML=
+        '<div class="sc-hd">'
+        +'<div><div class="sc-id">'+esc(s.id)+' · '+fData(s.criado_em)+'</div>'
+        +'<div class="sc-desc">'+esc(s.descricao||'')+'</div>'
+        +'<div class="sc-meta"><span>🏢 '+esc(s.area||'—')+'</span>'
+        +(s.destino?'<span>📍 '+esc(s.destino)+'</span>':'')
+        +'<span>👤 '+esc(s.solicitante||'')+'</span></div>'
+        +(s.protocolo&&tipo==='aprov'?'<div style="font-size:9px;color:#60A5FA;font-weight:700;margin-top:2px">📋 '+esc(s.protocolo)+' · ✅ '+fDataHora(s.decidido_em)+'</div>':'')
+        +'</div>'
+        +'<div><div class="sc-val">'+fBRk(mn)+'</div>'
+        +(eco>0?'<div class="sc-eco">Econ. '+fBRk(eco)+'</div>':'')
+        +'<div style="margin-top:4px">'+pillHtml+'</div></div></div>'
+        +'<div class="sc-ft"><div>Menor: <strong>'+esc(s.menor_fornecedor||'—')+' — '+fBR(mn)+'</strong></div>'
+        +'<div style="color:#E2E8F0">'+cots.length+' cot. ▾</div></div>';
 
-    // Click no card abre/fecha detalhe
-    (function(sid){
-      card.addEventListener('click',function(){tgDet('det-'+sid);});
-    })(s.id);
+      (function(sid){
+        card.addEventListener('click',function(){tgDet('det-'+sid);});
+      })(s.id);
 
-    // Detalhe
-    var cotRows='';
-    // Enriquecer cotações com blobs em memória se pdf_url ausente
-    cots.forEach(function(c,ci){if(!c.pdf_url&&_pdfBlobs[s.id+'_'+ci]) c.pdf_url=_pdfBlobs[s.id+'_'+ci];});
-    cots.forEach(function(c){
-      var isMin=Number(c.valor)===mn;
-      var isMax=Number(c.valor)===mx&&cots.length>1;
-      var pdfUrl=c.pdf_url||'';
-      var pdfHtml=pdfUrl
-        ?'<button class="pdf-cot" onclick="event.stopPropagation();abrirPDFModal([\''+pdfUrl.replace(/'/g,'%27')+'\'])" title="Ver orçamento">👁 Ver</button>'
-        :'<span style="color:#475569;font-size:9px;font-style:italic">sem anexo</span>';
-      cotRows+='<tr class="'+(isMin?'ct-mn':'')+'"><td>'+(isMin?'<span class="bmn">✓</span> ':'')
-        +esc(c.fornecedor||'')+'</td>'
-        +'<td><strong>'+fBR(c.valor)+'</strong></td>'
-        +'<td>'+(c.prazo||'—')+'</td>'
-        +'<td>'+(isMax?'<span class="bmx">Maior</span>':'')+'</td>'
-        +'<td>'+pdfHtml+'</td></tr>';
-    });
+      // Enriquecer cotações com blobs locais (seguro)
+      cots.forEach(function(c,ci){
+        try{
+          if(c&&!c.pdf_url&&_pdfBlobs&&_pdfBlobs[s.id+'_'+ci]){
+            c.pdf_url=_pdfBlobs[s.id+'_'+ci];
+          }
+        }catch(ex){}
+      });
 
-    var pdfs=cots.filter(function(c){return c.pdf_url;});
-    var pdfPack='';
-    if(pdfs.length){
-      var _pdfId='pdf_'+s.id.replace(/[^a-z0-9]/gi,'_');
-      window[_pdfId]=pdfs.map(function(c){return c.pdf_url;});
-      pdfPack='<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:var(--rs);'
-        +'padding:8px 12px;margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
-        +'<span style="font-size:12px;font-weight:600;color:#1D4ED8">📦 '+pdfs.length+' PDF(s)</span>'
-        +'<button style="background:#2563EB;color:#fff;border:none;border-radius:6px;padding:5px 12px;'
-        +'font-size:11px;font-weight:700;cursor:pointer;font-family:inherit" '
-        +'onclick="event.stopPropagation();abrPDFs(window.'+_pdfId+')">👁 Ver PDFs</button></div>';
+      var cotRows='';
+      cots.forEach(function(c){
+        if(!c) return;
+        try{
+          var isMin=Number(c.valor)===mn;
+          var isMax=Number(c.valor)===mx&&cots.length>1;
+          var pdfUrl=c.pdf_url||'';
+          var pdfHtml=pdfUrl
+            ?'<button class="pdf-cot" onclick="event.stopPropagation();abrirPDFModal([\''+pdfUrl.replace(/'/g,'%27')+'\'])" title="Ver orçamento">👁 Ver</button>'
+            :'<span style="color:#475569;font-size:9px;font-style:italic">sem anexo</span>';
+          cotRows+='<tr class="'+(isMin?'ct-mn':'')+'"><td>'+(isMin?'<span class="bmn">✓</span> ':'')
+            +esc(c.fornecedor||'')+'</td>'
+            +'<td><strong>'+fBR(c.valor)+'</strong></td>'
+            +'<td>'+(c.prazo||'—')+'</td>'
+            +'<td>'+(isMax?'<span class="bmx">Maior</span>':'')+'</td>'
+            +'<td>'+pdfHtml+'</td></tr>';
+        }catch(ex){}
+      });
+
+      var pdfs=cots.filter(function(c){return c&&c.pdf_url;});
+      var pdfPack='';
+      if(pdfs.length){
+        var _pdfId='pdf_'+s.id.replace(/[^a-z0-9]/gi,'_');
+        window[_pdfId]=pdfs.map(function(c){return c.pdf_url;});
+        pdfPack='<div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:var(--rs);'
+          +'padding:8px 12px;margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
+          +'<span style="font-size:12px;font-weight:600;color:#1D4ED8">📦 '+pdfs.length+' PDF(s)</span>'
+          +'<button style="background:#2563EB;color:#fff;border:none;border-radius:6px;padding:5px 12px;'
+          +'font-size:11px;font-weight:700;cursor:pointer;font-family:inherit" '
+          +'onclick="event.stopPropagation();abrPDFs(window.'+_pdfId+')">👁 Ver PDFs</button></div>';
+      }
+
+      var btnsHtml='';
+      if(tipo==='pend' && EU_PERFIL!=='comprador'){
+        btnsHtml='<textarea class="fi" id="obs-'+s.id
+          +'" style="margin-top:9px;min-height:48px" placeholder="Observação (opcional)..." '
+          +'onclick="event.stopPropagation()"></textarea>'
+          +'<div class="d3">'
+          +'<button class="bap" onclick="event.stopPropagation();abrirPinModal(\'aprovar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\''+esc(s.menor_fornecedor||'')+'\')">✅ Aprovar</button>'
+          +'<button class="brv" onclick="event.stopPropagation();abrirPinModal(\'revisar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">🔄 Revisar</button>'
+          +'<button class="bre" onclick="event.stopPropagation();abrirPinModal(\'rejeitar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">❌ Rejeitar</button>'
+          +'<button class="brv" style="background:#2563EB;color:#fff" onclick="event.stopPropagation();reenvWA(\''+s.id+'\')">📲 Reenviar</button>'
+          +'</div>';
+      }else{
+        btnsHtml='<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
+          +'<button class="bap" style="padding:9px 14px;font-size:12px;background:#1D4ED8" onclick="event.stopPropagation();abrirGerarPedido(\''+s.id+'\')" >📋 Gerar Pedido</button>'
+          +'<button class="bprint" onclick="event.stopPropagation();window.print()">🖨️ Imprimir</button>'
+          +(EU_PERFIL!=='comprador'?'<button class="brv" style="padding:8px 14px;font-size:11px" onclick="event.stopPropagation();reenvWA(\''+s.id+'\')">🔄 Reenviar WhatsApp</button>':'')
+          +'</div>';
+      }
+
+      var det=document.createElement('div');
+      det.className='det';
+      det.id='det-'+s.id;
+      det.innerHTML=
+        '<div class="card"><div class="card-hd"><span class="cht">Detalhes</span>'+pillHtml+'</div>'
+        +'<div style="padding:.85rem 1.1rem">'
+        +(s.area?'<div class="ir"><span class="il">Área</span><span class="iv">'+esc(s.area)+'</span></div>':'')
+        +(s.categoria?'<div class="ir"><span class="il">Categoria</span><span class="iv">'+esc(s.categoria)+'</span></div>':'')
+        +(s.destino?'<div class="ir"><span class="il">Destino</span><span class="iv">'+esc(s.destino)+'</span></div>':'')
+        +(s.justificativa?'<div class="ir"><span class="il">Justificativa</span><span class="iv">'+esc(s.justificativa)+'</span></div>':'')
+        +(s.decidido_em?'<div class="ir"><span class="il">Decidido em</span><span class="iv" style="color:var(--vd);font-weight:700">'+fDataHora(s.decidido_em)+'</span></div>':'')
+        +(s.decidido_por?'<div class="ir"><span class="il">Aprovado por</span><span class="iv" style="color:var(--vd);font-weight:700">👤 '+esc(s.decidido_por)+'</span></div>':'')
+        +(s.protocolo?'<div class="ir"><span class="il">Protocolo</span><span class="iv"><strong style="color:var(--az2);letter-spacing:.5px">📋 '+esc(s.protocolo)+'</strong></span></div>':'')
+        +(s.observacao?'<div class="ir"><span class="il">Obs.</span><span class="iv">'+esc(s.observacao)+'</span></div>':'')
+        +'<table class="ct"><thead><tr><th>Fornecedor</th><th>Valor</th><th>Prazo</th><th></th><th>PDF</th></tr></thead>'
+        +'<tbody>'+cotRows+'</tbody></table>'
+        +(eco>0?'<div class="eco-b"><div class="eco-r"><span style="color:var(--vd)">Menor</span>'
+          +'<span style="font-weight:700;color:var(--vd)">'+fBR(mn)+'</span></div>'
+          +'<div class="eco-r"><span>Maior</span><span>'+fBR(mx)+'</span></div>'
+          +'<div class="eco-r t"><span>Economia</span><span>'+fBR(eco)+' ('+ecoPct+'%)</span></div></div>':'')
+        +pdfPack
+        +btnsHtml
+        +'</div></div>';
+
+      cont.appendChild(card);
+      cont.appendChild(det);
+    }catch(itemErr){
+      console.error('rLista item erro (id='+((s&&s.id)||'?')+'):',itemErr);
+      // Continua para o próximo item — não para a lista
     }
-
-    var btnsHtml='';
-    if(tipo==='pend' && EU_PERFIL!=='comprador'){
-      btnsHtml='<textarea class="fi" id="obs-'+s.id
-        +'" style="margin-top:9px;min-height:48px" placeholder="Observação (opcional)..." '
-        +'onclick="event.stopPropagation()"></textarea>'
-        +'<div class="d3">'
-        +'<button class="bap" onclick="event.stopPropagation();abrirPinModal(\'aprovar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\''+esc(s.menor_fornecedor||'')+'\')">✅ Aprovar</button>'
-        +'<button class="brv" onclick="event.stopPropagation();abrirPinModal(\'revisar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">🔄 Revisar</button>'
-        +'<button class="bre" onclick="event.stopPropagation();abrirPinModal(\'rejeitar\',\''+s.id+'\',\''+esc(s.descricao||'').replace(/'/g,'\\x27')+'\',\''+fBR(mn)+'\',\'\')">❌ Rejeitar</button>'
-        +'<button class="brv" style="background:#2563EB;color:#fff" onclick="event.stopPropagation();reenvWA(\''+s.id+'\')">📲 Reenviar</button>'
-        +'</div>';
-    }else{
-      btnsHtml='<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
-        +'<button class="bap" style="padding:9px 14px;font-size:12px;background:#1D4ED8" onclick="event.stopPropagation();abrirGerarPedido(\''+s.id+'\')" >📋 Gerar Pedido</button>'
-        +'<button class="bprint" onclick="event.stopPropagation();window.print()">🖨️ Imprimir</button>'
-        +(EU_PERFIL!=='comprador'?'<button class="brv" style="padding:8px 14px;font-size:11px" onclick="event.stopPropagation();reenvWA(\''+s.id+'\')">🔄 Reenviar WhatsApp</button>':'')
-        +'</div>';
-    }
-    var det=document.createElement('div');
-    det.className='det';
-    det.id='det-'+s.id;
-    det.innerHTML=
-      '<div class="card"><div class="card-hd"><span class="cht">Detalhes</span>'+pillHtml+'</div>'
-      +'<div style="padding:.85rem 1.1rem">'
-      +(s.area?'<div class="ir"><span class="il">Área</span><span class="iv">'+esc(s.area)+'</span></div>':'')
-      +(s.categoria?'<div class="ir"><span class="il">Categoria</span><span class="iv">'+esc(s.categoria)+'</span></div>':'')
-      +(s.destino?'<div class="ir"><span class="il">Destino</span><span class="iv">'+esc(s.destino)+'</span></div>':'')
-      +(s.justificativa?'<div class="ir"><span class="il">Justificativa</span><span class="iv">'+esc(s.justificativa)+'</span></div>':'')
-      +(s.decidido_em?'<div class="ir"><span class="il">Decidido em</span><span class="iv" style="color:var(--vd);font-weight:700">'+fDataHora(s.decidido_em)+'</span></div>':'')
-      +(s.decidido_por?'<div class="ir"><span class="il">Aprovado por</span><span class="iv" style="color:var(--vd);font-weight:700">👤 '+esc(s.decidido_por)+'</span></div>':'')
-      +(s.protocolo?'<div class="ir"><span class="il">Protocolo</span><span class="iv"><strong style="color:var(--az2);letter-spacing:.5px">📋 '+esc(s.protocolo)+'</strong></span></div>':'')
-      +(s.observacao?'<div class="ir"><span class="il">Obs.</span><span class="iv">'+esc(s.observacao)+'</span></div>':'')
-      +'<table class="ct"><thead><tr><th>Fornecedor</th><th>Valor</th><th>Prazo</th><th></th><th>PDF</th></tr></thead>'
-      +'<tbody>'+cotRows+'</tbody></table>'
-      +(eco>0?'<div class="eco-b"><div class="eco-r"><span style="color:var(--vd)">Menor</span>'
-        +'<span style="font-weight:700;color:var(--vd)">'+fBR(mn)+'</span></div>'
-        +'<div class="eco-r"><span>Maior</span><span>'+fBR(mx)+'</span></div>'
-        +'<div class="eco-r t"><span>Economia</span><span>'+fBR(eco)+' ('+ecoPct+'%)</span></div></div>':'')
-      +pdfPack
-      +btnsHtml
-      +'</div></div>';
-
-    cont.appendChild(card);
-    cont.appendChild(det);
   });
 }
 function tgDet(id){
@@ -2020,53 +2104,81 @@ function abrConf(acao,id,desc,val,forn){
 }
 function fConf(e){if(e&&e.target!==document.getElementById('conf-ov'))return;document.getElementById('conf-ov').classList.remove('on');}
 async function confAcao(){
+  var btnOk=document.getElementById('conf-ok');
+  if(btnOk&&btnOk.disabled) return;
+  if(btnOk){btnOk.disabled=true;btnOk.innerHTML='<div class="spin" style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite"></div>';}
+
   document.getElementById('conf-ov').classList.remove('on');
+
   var obs=(document.getElementById('obs-'+_cSolId)||{}).value||'';
   var ns={aprovar:'aprovado',rejeitar:'rejeitado',revisar:'revisao'}[_cAcao];
   var agora_iso=new Date().toISOString();
   var agora_br=new Date().toLocaleString('pt-BR',{timeZone:'America/Recife',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  // Gerar número de protocolo único para aprovações
   var protocolo=ns==='aprovado'?('PROT-'+Date.now().toString().slice(-8)):'';
   var aprNum=ns==='aprovado'?gerarNumAPR():'';
-  if(MODO_LOCAL){
-    var sol2=LOCAL_DATA.solicitacoes.find(function(s){return s.id===_cSolId;});
-    if(sol2){
-      sol2.status=ns;
-      sol2.observacao=obs;
-      sol2.decidido_em=agora_iso;
-      sol2.decidido_por='Paulo (Presidente)';
-      if(protocolo) sol2.protocolo=protocolo;
-      if(aprNum) sol2.apr_num=aprNum;
+
+  try{
+    if(MODO_LOCAL){
+      var sol2=LOCAL_DATA.solicitacoes.find(function(s){return s.id===_cSolId;});
+      if(sol2){
+        sol2.status=ns; sol2.observacao=obs; sol2.decidido_em=agora_iso;
+        sol2.decidido_por='Paulo (Presidente)';
+        if(protocolo) sol2.protocolo=protocolo;
+        if(aprNum) sol2.apr_num=aprNum;
+      }
+      if(ns==='aprovado') LOCAL_DATA.eco=(LOCAL_DATA.eco||0)+(sol2?Number(sol2.economia)||0:0);
+    } else {
+      // Update com todos os campos — fallback se alguma coluna não existir
+      var updFull={status:ns,observacao:obs,decidido_em:agora_iso,decidido_por:'Paulo (Presidente)'};
+      if(protocolo) updFull.protocolo=protocolo;
+      if(aprNum) updFull.apr_num=aprNum;
+      var r1=await sb.from('solicitacoes').update(updFull).eq('id',_cSolId);
+      if(r1.error){
+        // Fallback sem colunas extras
+        console.warn('Update completo falhou, tentando básico:',r1.error.message);
+        var r1b=await sb.from('solicitacoes').update({status:ns,observacao:obs,decidido_em:agora_iso}).eq('id',_cSolId);
+        if(r1b.error) throw new Error('Falha ao atualizar status: '+r1b.error.message);
+      }
+      // Inserir decisão
+      var dec={solicitacao_id:_cSolId,acao:ns,observacao:obs,decidido_em:agora_iso,decidido_por:'Paulo (Presidente)'};
+      var r2=await sb.from('decisoes').insert(dec);
+      if(r2.error){
+        // Tenta sem decidido_por
+        await sb.from('decisoes').insert({solicitacao_id:_cSolId,acao:ns,observacao:obs,decidido_em:agora_iso});
+      }
     }
-    if(ns==='aprovado') LOCAL_DATA.eco=(LOCAL_DATA.eco||0)+(sol2?Number(sol2.economia)||0:0);
-  } else {
-    var upd={status:ns,observacao:obs,decidido_em:agora_iso,decidido_por:'Paulo (Presidente)'};
-    if(protocolo) upd.protocolo=protocolo;
-    if(aprNum) upd.apr_num=aprNum;
-    await sb.from('solicitacoes').update(upd).eq('id',_cSolId);
-    await sb.from('decisoes').insert({solicitacao_id:_cSolId,acao:ns,observacao:obs,decidido_por:'Paulo (Presidente)',decidido_em:agora_iso});
-  }
-  var icos={aprovar:'✅',rejeitar:'❌',revisar:'🔄'};
-  var msgs={
-    aprovar:'Aprovado com sucesso!\n\n'+_cDesc+'\n\n📋 Protocolo: '+protocolo+(aprNum?'\n🔖 Aprovação: '+aprNum:'')+'\n🕐 '+agora_br+'\n👤 Paulo (Presidente)',
-    rejeitar:'Solicitação rejeitada.\n\n'+_cDesc+'\n\n🕐 '+agora_br,
-    revisar:'Revisão solicitada.\n\n'+_cDesc+'\n\n🕐 '+agora_br
-  };
-  // Recarregar TUDO imediatamente antes de mostrar popup
-  await carregarPend();
-  await carregarDash();
-  await carregarAprov();
-  await carregarRev();
 
-  // ===== GERAR PEDIDO AUTOMATICAMENTE AO APROVAR =====
-  if(ns==='aprovado'){
-    await gerarPedidoAutomatico(_cSolId, aprNum, protocolo);
-    _abaAposDecisao = 'ped'; // navegar direto para Pedidos após OK
-  } else {
-    _abaAposDecisao = {rejeitar:'pend', revisar:'rev'}[_cAcao];
-  }
+    // Recarregar abas — cada uma protegida individualmente
+    try{await carregarPend();}catch(e){console.warn('carregarPend:',e);}
+    try{await carregarDash();}catch(e){console.warn('carregarDash:',e);}
+    try{await carregarAprov();}catch(e){console.warn('carregarAprov:',e);}
+    try{await carregarRev();}catch(e){console.warn('carregarRev:',e);}
 
-  suc(icos[_cAcao],{aprovar:'✅ Aprovado — Pedido Gerado!',rejeitar:'❌ Rejeitado',revisar:'🔄 Revisão solicitada'}[_cAcao],msgs[_cAcao]);
+    // Gerar pedido ao aprovar
+    if(ns==='aprovado'){
+      try{await gerarPedidoAutomatico(_cSolId,aprNum,protocolo);}catch(e){console.warn('gerarPedido:',e);}
+      _abaAposDecisao='ped';
+    } else {
+      _abaAposDecisao={rejeitar:'pend',revisar:'rev'}[_cAcao]||'pend';
+    }
+
+    var icos={aprovar:'✅',rejeitar:'❌',revisar:'🔄'};
+    var msgs={
+      aprovar:'Aprovado!\n\n'+_cDesc+'\n\n📋 Protocolo: '+protocolo+(aprNum?'\n🔖 Nº: '+aprNum:'')+'\n🕐 '+agora_br+'\n👤 Paulo (Presidente)',
+      rejeitar:'Solicitação rejeitada.\n\n'+_cDesc+'\n\n🕐 '+agora_br,
+      revisar:'Revisão solicitada.\n\n'+_cDesc+'\n\n🕐 '+agora_br
+    };
+    suc(icos[_cAcao],
+      {aprovar:'✅ Aprovado — Pedido Gerado!',rejeitar:'❌ Rejeitado',revisar:'🔄 Revisão solicitada'}[_cAcao],
+      msgs[_cAcao]);
+
+  }catch(err){
+    console.error('confAcao erro:',err);
+    alert('❌ Erro ao salvar decisão:\n\n'+err.message+'\n\nExecute o SQL no Supabase e recarregue a página.');
+  }finally{
+    var labelBtn={aprovar:'✅ Aprovar',rejeitar:'❌ Rejeitar',revisar:'🔄 Revisar'}[_cAcao]||'Confirmar';
+    if(btnOk){btnOk.disabled=false;btnOk.textContent=labelBtn;}
+  }
 }
 
 // WA
@@ -2593,6 +2705,9 @@ function cancelarPedido(pcNum){
     modal.remove();
     p.status='cancelado';
     p.cancelado_em=new Date().toISOString();
+    // ── PERSISTIR
+    salvarPedidosLocal();
+    salvarPedidoSupabase(p);
     atualizarBaseRelatorio();
     renderCardsPedidoStatus();
     renderPedidos();
@@ -3267,6 +3382,10 @@ async function gerarPedidoAutomatico(solId, aprNum, protocolo){
   _pedidos.push(pedido);
   _pcAtual = pedido;
 
+  // ── PERSISTIR IMEDIATAMENTE
+  salvarPedidosLocal();
+  salvarPedidoSupabase(pedido);
+
   // FORÇAR APARIÇÃO IMEDIATA DO PEDIDO
   try{
     if(typeof renderPedidos==='function') renderPedidos();
@@ -3297,73 +3416,70 @@ function gerarNumPC(){
 // ABRIR MODAL GERAR PEDIDO
 // =============================================
 async function abrirGerarPedido(solId){
-  // Verificar se já existe pedido para esta solicitação
-  var pedExist = _pedidos.find(function(p){return p.sol_id===solId;});
+  // Se já existe pedido para esta sol, apenas abrir
+  var pedExist=_pedidos.find(function(p){return p.sol_id===solId;});
   if(pedExist){
-    _pcAtual = pedExist;
+    _pcAtual=pedExist;
     renderDocPedido(pedExist);
     document.getElementById('pc-modal').classList.add('on');
     return;
   }
-
-  // Buscar dados da solicitação
-  var s = null;
-  if(MODO_LOCAL){
-    s = LOCAL_DATA.solicitacoes.find(function(x){return x.id===solId;});
-    if(s){
-      var cots = LOCAL_DATA.cotacoes.filter(function(c){return c.solicitacao_id===solId;});
-      s = Object.assign({},s,{cotacoes:cots});
+  // Feedback no botão
+  var btnClicado=event&&event.target;
+  if(btnClicado&&btnClicado.tagName==='BUTTON'){btnClicado.disabled=true;btnClicado.textContent='⏳ Gerando...';}
+  try{
+    var s=null;
+    if(MODO_LOCAL){
+      s=LOCAL_DATA.solicitacoes.find(function(x){return x.id===solId;});
+      if(s){
+        var cots=LOCAL_DATA.cotacoes.filter(function(c){return c.solicitacao_id===solId;});
+        s=Object.assign({},s,{cotacoes:cots});
+      }
+    } else {
+      var rS=await sb.from('solicitacoes').select('*').eq('id',solId).single();
+      if(rS.error) throw new Error('Solicitação não encontrada: '+rS.error.message);
+      s=rS.data;
+      // Buscar cotações separado
+      var rC=await sb.from('cotacoes').select('*').eq('solicitacao_id',solId);
+      s=Object.assign({},s,{cotacoes:(rC.error?[]:rC.data)||[]});
     }
-  } else {
-    var r = await sb.from('solicitacoes').select('*,cotacoes(*)').eq('id',solId).single();
-    s = r.data;
+    if(!s){throw new Error('Solicitação não encontrada.');}
+    var cots=s.cotacoes||[];
+    var mn=Number(s.menor_valor)||0;
+    var cotVenc=cots.find(function(c){return Number(c.valor)===mn;})||cots[0]||{};
+    var pcNum=gerarNumPC();
+    var pedido={
+      pc_num:pcNum, sol_id:solId, sol_num:s.id,
+      apr_num:s.apr_num||s.protocolo||'—',
+      status:'emitido', emitido_em:new Date().toISOString(),
+      area:s.area||'', categoria:s.categoria||'', destino:s.destino||'',
+      solicitante:s.solicitante||'', justificativa:s.justificativa||'',
+      descricao:s.descricao||'',
+      fornecedor:cotVenc.fornecedor||s.menor_fornecedor||'',
+      valor:mn, valor_original:mn,
+      prazo_pag:cotVenc.prazo||s.prazo_pag||'',
+      prazo_entrega:s.entrega||s.prazo_entrega||'',
+      local_entrega:s.destino||'', resp_recebimento:'', obs:'',
+      historico_revisao:[],
+      forn_razao:cotVenc.fornecedor||s.menor_fornecedor||'',
+      forn_cnpj:'', forn_contato:'', forn_tel:'', forn_email:'',
+      garantia:'12 meses',
+    };
+    _pedidos.push(pedido);
+    _pcAtual=pedido;
+    salvarPedidosLocal();
+    salvarPedidoSupabase(pedido);
+    atualizarContadorPed();
+    renderPedidos();
+    renderDocPedido(pedido);
+    document.getElementById('pc-modal').classList.add('on');
+  }catch(err){
+    console.error('abrirGerarPedido:',err);
+    alert('❌ Erro ao gerar pedido:\n'+err.message);
+  }finally{
+    if(btnClicado&&btnClicado.tagName==='BUTTON'){btnClicado.disabled=false;btnClicado.textContent='📋 Gerar Pedido';}
   }
-  if(!s){alert('Solicitação não encontrada.');return;}
-
-  // Cots: pegar menor
-  var cots = s.cotacoes||[];
-  var mn = Number(s.menor_valor)||0;
-  var cotVenc = cots.find(function(c){return Number(c.valor)===mn;})||cots[0]||{};
-
-  var pcNum = gerarNumPC();
-  var pedido = {
-    pc_num: pcNum,
-    sol_id: solId,
-    sol_num: s.id,
-    apr_num: s.apr_num||s.protocolo||'—',
-    status: 'emitido',
-    emitido_em: new Date().toISOString(),
-    area: s.area||'',
-    categoria: s.categoria||'',
-    destino: s.destino||'',
-    solicitante: s.solicitante||'',
-    justificativa: s.justificativa||'',
-    descricao: s.descricao||'',
-    fornecedor: cotVenc.fornecedor||s.menor_fornecedor||'',
-    valor: mn,
-    valor_original: mn,
-    prazo_pag: cotVenc.prazo||s.prazo_pag||'',
-    prazo_entrega: s.entrega||'',
-    local_entrega: s.destino||'',
-    resp_recebimento: '',
-    obs: '',
-    historico_revisao: [],
-    // campos do fornecedor (editáveis)
-    forn_razao: cotVenc.fornecedor||s.menor_fornecedor||'',
-    forn_cnpj: '',
-    forn_contato: '',
-    forn_tel: '',
-    forn_email: '',
-    garantia: '12 meses',
-  };
-
-  _pedidos.push(pedido);
-  _pcAtual = pedido;
-  atualizarContadorPed();
-  renderPedidos();
-  renderDocPedido(pedido);
-  document.getElementById('pc-modal').classList.add('on');
- }
+}
 
 function fecharPedido(){
   document.getElementById('pc-modal').classList.remove('on');
@@ -3710,6 +3826,9 @@ function confirmarRevPed(){
   });
   _pcAtual.valor = novoValor;
   if(novoPrazo && novoPrazo !== _pcAtual.prazo_entrega) _pcAtual.prazo_entrega = novoPrazo;
+  // ── PERSISTIR
+  salvarPedidosLocal();
+  salvarPedidoSupabase(_pcAtual);
   document.getElementById('rev-ped-ov').classList.remove('on');
   renderDocPedido(_pcAtual);
   var msg='';
@@ -3814,36 +3933,42 @@ function salvarPedido(){
   }
   _coletarCamposPedido();
   // Avançar status automaticamente
-  var statusAnterior=_pcAtual.status;
-var proximoStatus=_PROX_STATUS[statusAnterior]||statusAnterior;
+  var statusAnterior = _pcAtual.status;
+  var proximoStatus = _PROX_STATUS[statusAnterior] || statusAnterior;
 
-if(statusAnterior==='recebido'){
-    _pcAtual.status='finalizado';
-}else{
-    _pcAtual.status=proximoStatus;
-}
+  if(statusAnterior === 'recebido'){
+    _pcAtual.status = 'finalizado';
+    proximoStatus = 'finalizado';
+  } else {
+    _pcAtual.status = proximoStatus;
+  }
 
-_pcAtual.salvo_em=new Date().toISOString();
-    // Atualizar tudo
+  _pcAtual.salvo_em = new Date().toISOString();
+
+  // ── PERSISTIR: localStorage imediato
+  salvarPedidosLocal();
+
+  // ── PERSISTIR: Supabase assíncrono (não bloqueia UI)
+  salvarPedidoSupabase(_pcAtual);
+
+  // ── PERSISTIR: atualizar coluna pc_status na tabela solicitacoes também
+  if(!MODO_LOCAL && sb && _pcAtual.sol_id){
+    sb.from('solicitacoes')
+      .update({ pc_status: _pcAtual.status, pc_num: _pcAtual.pc_num })
+      .eq('id', _pcAtual.sol_id)
+      .then(function(){});
+  }
+
+  // Atualizar UI
   atualizarBaseRelatorio();
   renderDocPedido(_pcAtual);
   renderPedidos();
   renderCardsPedidoStatus();
   atualizarContadorPed();
-  // Salvar no Supabase se conectado
-  if(!MODO_LOCAL && sb && _pcAtual.sol_id){
-    sb.from('solicitacoes')
-      .update({
-          pc_status: _pcAtual.status,
-          pc_num: _pcAtual.pc_num
-      })
-      .eq('id', _pcAtual.sol_id)
-      .then(function(){});
-}
-  }
-  var msgStatus=_STATUS_LABEL[proximoStatus]||proximoStatus;
-  var msgAntes=_STATUS_LABEL[statusAnterior]||statusAnterior;
-  suc('💾','Pedido Salvo!',_pcAtual.pc_num+'\n\n'+_STATUS_ICO[statusAnterior]+' '+msgAntes+' → '+_STATUS_ICO[proximoStatus]+' '+msgStatus+'\n\nStatus atualizado automaticamente.');
+
+  var msgStatus = _STATUS_LABEL[proximoStatus] || proximoStatus;
+  var msgAntes  = _STATUS_LABEL[statusAnterior] || statusAnterior;
+  suc('💾','Pedido Salvo!', _pcAtual.pc_num+'\n\n'+_STATUS_ICO[statusAnterior]+' '+msgAntes+' → '+_STATUS_ICO[proximoStatus]+'  '+msgStatus+'\n\nSalvo com sucesso!');
 }
 
 function _abrirPopupReativar(){
@@ -3881,6 +4006,10 @@ function reativarPedido(){
   _pcAtual.cancelado_em=null;
   _pcAtual.reativado_em=new Date().toISOString();
 
+  // ── PERSISTIR
+  salvarPedidosLocal();
+  salvarPedidoSupabase(_pcAtual);
+
   try{
     atualizarBaseRelatorio();
     renderDocPedido(_pcAtual);
@@ -3897,9 +4026,107 @@ function reativarPedido(){
 }
 
 // =============================================
+// PERSISTÊNCIA DE PEDIDOS — localStorage + Supabase
+// =============================================
+var _PEDIDOS_KEY = 'esp_pedidos_v2';
+
+function salvarPedidosLocal(){
+  try{
+    localStorage.setItem(_PEDIDOS_KEY, JSON.stringify(_pedidos));
+  }catch(e){ console.warn('Erro ao salvar pedidos local:', e); }
+}
+
+function carregarPedidosLocal(){
+  try{
+    var raw = localStorage.getItem(_PEDIDOS_KEY);
+    if(raw){
+      var arr = JSON.parse(raw);
+      if(Array.isArray(arr)) _pedidos = arr;
+    }
+  }catch(e){ console.warn('Erro ao carregar pedidos local:', e); }
+}
+
+async function salvarPedidoSupabase(p){
+  if(MODO_LOCAL || !sb) return;
+  try{
+    // Tenta upsert na tabela pedidos_compra
+    var payload = {
+      pc_num: p.pc_num,
+      sol_id: p.sol_id||null,
+      sol_num: p.sol_num||null,
+      apr_num: p.apr_num||null,
+      status: p.status,
+      emitido_em: p.emitido_em||new Date().toISOString(),
+      salvo_em: p.salvo_em||new Date().toISOString(),
+      area: p.area||null,
+      categoria: p.categoria||null,
+      destino: p.destino||null,
+      solicitante: p.solicitante||null,
+      justificativa: p.justificativa||null,
+      descricao: p.descricao||null,
+      fornecedor: p.fornecedor||null,
+      forn_razao: p.forn_razao||null,
+      forn_cnpj: p.forn_cnpj||null,
+      forn_contato: p.forn_contato||null,
+      forn_tel: p.forn_tel||null,
+      forn_email: p.forn_email||null,
+      valor: p.valor||0,
+      valor_original: p.valor_original||p.valor||0,
+      prazo_pag: p.prazo_pag||null,
+      prazo_pag_livre: p.prazo_pag_livre||null,
+      prazo_pag_original: p.prazo_pag_original||null,
+      prazo_entrega: p.prazo_entrega||null,
+      prazo_entrega_original: p.prazo_entrega_original||null,
+      local_entrega: p.local_entrega||null,
+      resp_recebimento: p.resp_recebimento||null,
+      garantia: p.garantia||null,
+      obs: p.obs||null,
+      historico_revisao: JSON.stringify(p.historico_revisao||[]),
+      cancelado_em: p.cancelado_em||null,
+      reativado_em: p.reativado_em||null
+    };
+    var r = await sb.from('pedidos_compra').upsert(payload, {onConflict:'pc_num'});
+    if(r.error) console.warn('Supabase upsert pedido error:', r.error.message);
+  }catch(e){ console.warn('Erro salvarPedidoSupabase:', e); }
+}
+
+async function carregarPedidosSupabase(){
+  if(MODO_LOCAL || !sb) return;
+  try{
+    var r = await sb.from('pedidos_compra').select('*').order('emitido_em',{ascending:false});
+    if(r.error){
+      // Tabela pode não existir ainda — usar localStorage silenciosamente
+      console.warn('Tabela pedidos_compra não encontrada, usando localStorage:', r.error.message);
+      return;
+    }
+    var rows = r.data||[];
+    if(rows.length > 0){
+      // Mesclar: Supabase é a fonte de verdade
+      rows.forEach(function(row){
+        // Parse historico_revisao se vier como string
+        try{ if(typeof row.historico_revisao==='string') row.historico_revisao=JSON.parse(row.historico_revisao||'[]'); }catch(e){ row.historico_revisao=[]; }
+        var idx = _pedidos.findIndex(function(p){ return p.pc_num===row.pc_num; });
+        if(idx>=0){ _pedidos[idx] = Object.assign(_pedidos[idx], row); }
+        else { _pedidos.push(row); }
+      });
+      salvarPedidosLocal(); // sincronizar localStorage com Supabase
+    }
+  }catch(e){ console.warn('Erro carregarPedidosSupabase:', e); }
+}
+
+// =============================================
 // CARREGAR LISTA DE PEDIDOS
 // =============================================
 function carregarPedidos(){
+  atualizarBaseRelatorio();
+  renderCardsPedidoStatus();
+  renderPedidos();
+  atualizarContadorPed();
+}
+
+async function inicializarPedidos(){
+  carregarPedidosLocal(); // carregar do localStorage imediatamente
+  await carregarPedidosSupabase(); // depois sincronizar com Supabase
   atualizarBaseRelatorio();
   renderCardsPedidoStatus();
   renderPedidos();
