@@ -205,7 +205,7 @@ textarea.fi{resize:vertical;min-height:60px}
 .conf-t{font-size:16px;font-weight:700;margin-bottom:5px;color:#111827}
 .conf-d{font-size:12px;color:#374151;margin-bottom:1.1rem;line-height:1.6;white-space:pre-wrap}
 .conf-bs{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.suc-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;
+.suc-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;
          display:none;align-items:center;justify-content:center}
 .suc-ov.on{display:flex}
 .suc-bx{background:#fff;border-radius:20px;padding:1.75rem 1.4rem;text-align:center;
@@ -531,6 +531,7 @@ option{
 <div id="aba-aprov" class="w" style="display:none">
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:.75rem;flex-wrap:wrap">
     <input class="fi" id="aprov-busca" placeholder="Buscar aprovados..." style="flex:1;min-width:150px" oninput="renderAprovados()">
+    <button id="btn-limpar-cancelados" style="display:none;background:rgba(239,68,68,.12);color:#EF4444;border:1px solid rgba(239,68,68,.35);border-radius:10px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit" onclick="limparCanceladosAprov()">🗑️ Remover cancelados</button>
     <button class="bprint" onclick="window.print()">🖨️ Imprimir</button>
   </div>
   <div id="lista-aprov"><div class="empty-msg">Carregando...</div></div>
@@ -1161,11 +1162,13 @@ option{
         <div><label class="fl">Status Pedido</label>
           <select class="fi" id="rel-ped-status" onchange="carregarRelatorio()">
             <option value="">Todos os status</option>
+            <option value="aprovado">Aprovados</option>
             <option value="emitido">Emitido</option>
             <option value="enviado">Enviado ao Fornecedor</option>
             <option value="aguardando">Aguardando Entrega</option>
             <option value="recebido">Recebido</option>
             <option value="finalizado">Finalizado</option>
+            <option value="cancelado">Cancelado</option>
           </select>
         </div>
       </div>
@@ -1635,11 +1638,39 @@ async function carregarAprov(){
     document.getElementById('lista-aprov').innerHTML='<div class="empty-msg" style="color:#EF4444">Erro ao carregar aprovados: '+e.message+'</div>';
   }
 }
+async function limparCanceladosAprov(){
+  var cancelados=(_pedidos||[]).filter(function(p){return p.status==='cancelado'&&p.sol_id;});
+  if(!cancelados.length){ suc('✅','Sem cancelados','Não há pedidos cancelados nos aprovados.'); return; }
+  // Actualizar LOCAL_DATA
+  cancelados.forEach(function(p){
+    var sol=LOCAL_DATA.solicitacoes.find(function(s){return s.id===p.sol_id;});
+    if(sol) sol.status='cancelado';
+  });
+  // Actualizar Supabase (em paralelo)
+  if(!MODO_LOCAL && sb){
+    var ids=cancelados.map(function(p){return p.sol_id;});
+    await sb.from('solicitacoes').update({status:'cancelado'}).in('id',ids);
+  }
+  // Remover de _aprovTodos
+  var ids2=cancelados.map(function(p){return p.sol_id;});
+  _aprovTodos=_aprovTodos.filter(function(s){return ids2.indexOf(s.id)<0;});
+  renderAprovados();
+  suc('🗑️','Removidos',''+cancelados.length+' pedido(s) cancelado(s) removido(s) dos aprovados.');
+}
 function renderAprovados(){
   var b=(document.getElementById('aprov-busca').value||'').toLowerCase();
+  // Solicitações que já têm pedido activo (qualquer status excepto cancelado) → saem dos Aprovados
+  var comPedidoSolIds = (_pedidos||[]).filter(function(p){return p.status!=='cancelado'&&p.sol_id;}).map(function(p){return p.sol_id;});
+  // Solicitações cujo único pedido foi cancelado → também saem (já foram tratadas)
+  var canceladosSolIds = (_pedidos||[]).filter(function(p){return p.status==='cancelado'&&p.sol_id;}).map(function(p){return p.sol_id;});
+  var excluir = comPedidoSolIds.concat(canceladosSolIds.filter(function(id){return comPedidoSolIds.indexOf(id)<0;}));
   var fd=_aprovTodos.filter(function(d){
+    if(excluir.indexOf(d.id)>=0) return false;
     return !b||(d.descricao||'').toLowerCase().includes(b)||(d.area||'').toLowerCase().includes(b)||(d.menor_fornecedor||'').toLowerCase().includes(b);
   });
+  // Mostrar/ocultar botão de limpeza (apenas para cancelados sem pedido activo)
+  var btnLimpar=document.getElementById('btn-limpar-cancelados');
+  if(btnLimpar) btnLimpar.style.display=canceladosSolIds.length>0?'':'none';
   rLista('lista-aprov',fd,'aprov');
 }
 
@@ -2567,7 +2598,36 @@ function exportarRelatorioExcel(){
 }
 
 function exportarRelatorioPDF(){
-  imprimirRelatorioFiltrado();
+  var c=document.getElementById('rel-corpo');
+  if(!c||!c.innerHTML.trim()){alert('Gere o relatório primeiro.');return;}
+  var tipo=(document.getElementById('rel-tipo')||{value:''}).value;
+  var filtros=[];
+  var elIni=document.getElementById('rel-ini'); if(elIni&&elIni.value) filtros.push('De: '+elIni.value);
+  var elFim=document.getElementById('rel-fim'); if(elFim&&elFim.value) filtros.push('Até: '+elFim.value);
+  var elForn=document.getElementById('rel-forn'); if(elForn&&elForn.value) filtros.push('Forn: '+elForn.value);
+  var elArea=document.getElementById('rel-area'); if(elArea&&elArea.value) filtros.push('Área: '+elArea.value);
+  var elPs=document.getElementById('rel-ped-status'); if(elPs&&elPs.value) filtros.push('Status: '+elPs.value);
+  var tituloTipo={geral:'Geral',pedidos:'Pedidos de Compra',aprovados:'Aprovados',rejeitados:'Rejeitados',pendentes:'Pendentes',revisao:'Em Revisão',fornecedor:'Por Fornecedor',area:'Por Área',entrega:'Por Prazo de Entrega',mes:'Por Mês'}[tipo]||tipo;
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório '+tituloTipo+'</title>'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:14px}'
+    +'table{width:100%;border-collapse:collapse;font-size:9px}th{background:#1E3A5F;color:#fff;padding:6px 8px;text-align:left}'
+    +'td{padding:5px 8px;border-bottom:1px solid #ddd;color:#111}tr:nth-child(even){background:#f7f7f7}'
+    +'.pill,.sc-val,.kpi-n,.sc-id,.sc-desc,.sc-meta,.sc-ft,.sc-eco{color:#000!important;background:transparent!important;border-color:#ccc!important}'
+    +'h2{font-size:15px;color:#1E3A5F;margin-bottom:4px;font-weight:900}'
+    +'p{font-size:10px;color:#555;margin-bottom:10px}'
+    +'span[style]{color:#000!important;background:transparent!important}'
+    +'@page{margin:10mm;size:A4 landscape}</style></head>'
+    +'<body>'
+    +'<h2>Relatório Esposende Calçados — '+tituloTipo+'</h2>'
+    +'<p>Gerado em '+new Date().toLocaleDateString('pt-BR')+' '+new Date().toLocaleTimeString('pt-BR')
+    +(filtros.length?' &nbsp;|&nbsp; '+filtros.join(' | '):'')+'</p>'
+    +c.innerHTML
+    +'</body></html>';
+  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var w=window.open(url,'_blank');
+  if(!w){alert('Popup bloqueado. Permita popups para este ficheiro e tente novamente.');URL.revokeObjectURL(url);return;}
+  w.onload=function(){setTimeout(function(){w.print();URL.revokeObjectURL(url);},400);};
 }
 
 // PDF do pedido — abrir janela de impressão com opção de salvar como PDF
@@ -2600,13 +2660,29 @@ function renderCardsPedidoStatus(){
     div.style.cssText='background:'+(ativo?s.bg:'rgba(255,255,255,.04)')+';border:1.5px solid '+(ativo?s.cor:'rgba(255,255,255,.1)')+';border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .15s;text-align:center';
     div.innerHTML='<div style="font-size:18px;margin-bottom:3px">'+s.ico+'</div>'
       +'<div style="font-size:20px;font-weight:800;color:'+s.cor+'">'+qtd+'</div>'
-      +'<div style="font-size:9px;color:rgba(255,255,255,.6);margin-top:1px">'+s.label+'</div>';
+      +'<div style="font-size:9px;color:rgba(255,255,255,.6);margin-top:1px">'+s.label+'</div>'
+      +(s.key==='cancelado'&&qtd>0?'<div style="margin-top:6px"><button onclick="event.stopPropagation();excluirPedidosCancelados()" style="background:rgba(239,68,68,.18);color:#EF4444;border:1px solid rgba(239,68,68,.4);border-radius:7px;padding:3px 8px;font-size:9px;font-weight:700;cursor:pointer;font-family:inherit">🗑️ Excluir</button></div>':'');
     div.setAttribute('data-sk',s.key);
     div.addEventListener('click',function(){filtrarPedidoStatus(this.getAttribute('data-sk'));});
     cont.appendChild(div);
   });
 }
 
+async function excluirPedidosCancelados(){
+  var cancelados=_pedidos.filter(function(p){return p.status==='cancelado';});
+  if(!cancelados.length){suc('✅','Sem cancelados','Não há pedidos cancelados.');return;}
+  if(!confirm('Excluir '+cancelados.length+' pedido(s) cancelado(s) permanentemente?')) return;
+  var ids=cancelados.map(function(p){return p.pc_num;});
+  _pedidos=_pedidos.filter(function(p){return p.status!=='cancelado';});
+  salvarPedidosLocal();
+  if(!MODO_LOCAL&&sb){
+    await sb.from('pedidos_compra').delete().in('pc_num',ids);
+  }
+  renderPedidos();
+  renderCardsPedidoStatus();
+  atualizarContadorPed();
+  suc('🗑️','Excluídos',ids.length+' pedido(s) cancelado(s) removido(s).');
+}
 function filtrarPedidoStatus(status){
   var sel=document.getElementById('ped-filtro-status');
   if(!sel) return;
@@ -2705,6 +2781,14 @@ function cancelarPedido(pcNum){
     modal.remove();
     p.status='cancelado';
     p.cancelado_em=new Date().toISOString();
+    // Cascata: actualizar a solicitação vinculada para que saia dos Aprovados
+    if(p.sol_id){
+      var sol=LOCAL_DATA.solicitacoes.find(function(s){return s.id===p.sol_id;});
+      if(sol) sol.status='cancelado';
+      if(!MODO_LOCAL && sb){
+        sb.from('solicitacoes').update({status:'cancelado'}).eq('id',p.sol_id).then(function(){});
+      }
+    }
     // ── PERSISTIR
     salvarPedidosLocal();
     salvarPedidoSupabase(p);
@@ -2715,6 +2799,9 @@ function cancelarPedido(pcNum){
     // Fechar modal do pedido se estiver aberto
     var pcModal=document.getElementById('pc-modal');
     if(pcModal) pcModal.classList.remove('on');
+    // Refrescar aba Aprovados e Dashboard
+    if(typeof carregarAprov==='function') carregarAprov();
+    if(typeof carregarDash==='function') carregarDash();
     suc('❌','Pedido Cancelado',p.pc_num+'\n'+esc(p.descricao||'')+'\nO pedido foi cancelado com sucesso.');
   });
 }
@@ -3996,6 +4083,33 @@ function fecharReativarModal(){
   var m=document.getElementById('reativar-modal');
   if(m) m.remove();
 }
+function _restaurarSolicitacao(p){
+  if(!p||!p.sol_id) return;
+  var sol=LOCAL_DATA.solicitacoes.find(function(s){return s.id===p.sol_id;});
+  if(sol) sol.status='aprovado';
+  if(!MODO_LOCAL && sb){
+    sb.from('solicitacoes').update({status:'aprovado'}).eq('id',p.sol_id).then(function(){});
+  }
+}
+
+function _reativarPedidoCard(pcNum){
+  var p=_pedidos.find(function(x){return x.pc_num===pcNum;});
+  if(!p) return;
+  p.status='emitido';
+  p.cancelado_em=null;
+  p.reativado_em=new Date().toISOString();
+  _restaurarSolicitacao(p);
+  salvarPedidosLocal();
+  salvarPedidoSupabase(p);
+  atualizarBaseRelatorio();
+  renderPedidos();
+  renderCardsPedidoStatus();
+  atualizarContadorPed();
+  if(typeof carregarAprov==='function') carregarAprov();
+  if(typeof carregarDash==='function') carregarDash();
+  suc('🔄','Pedido Reativado!',pcNum+'\nStatus: Emitido\nA solicitação voltou para Aprovados.');
+}
+
 function reativarPedido(){
   var modal=document.getElementById('reativar-modal');
   if(modal) modal.remove();
@@ -4005,6 +4119,8 @@ function reativarPedido(){
   _pcAtual.status='emitido';
   _pcAtual.cancelado_em=null;
   _pcAtual.reativado_em=new Date().toISOString();
+
+  _restaurarSolicitacao(_pcAtual);
 
   // ── PERSISTIR
   salvarPedidosLocal();
@@ -4016,12 +4132,14 @@ function reativarPedido(){
     renderPedidos();
     renderCardsPedidoStatus();
     atualizarContadorPed();
+    if(typeof carregarAprov==='function') carregarAprov();
+    if(typeof carregarDash==='function') carregarDash();
   }catch(e){console.log(e);}
 
   suc(
     '🔄',
     'Pedido Reativado!',
-    _pcAtual.pc_num + '\nStatus voltou para: Emitido\nPode editar e salvar novamente.'
+    _pcAtual.pc_num + '\nStatus: Emitido\nA solicitação voltou para Aprovados.'
   );
 }
 
@@ -4182,6 +4300,7 @@ function renderPedidos(){
     card.setAttribute('data-pcnum',p.pc_num); card.style.cursor='pointer';
     card.addEventListener('click',function(e){
       if(e.target.classList.contains('pc-cancelar-btn')){e.stopPropagation();cancelarPedido(this.getAttribute('data-pcnum'));return;}
+      if(e.target.classList.contains('pc-reativar-btn')){e.stopPropagation();_reativarPedidoCard(e.target.getAttribute('data-pcnum'));return;}
       abrirPedidoExistente(this.getAttribute('data-pcnum'));
     });
     var prazoHtml='';
@@ -4220,7 +4339,7 @@ function renderPedidos(){
           +(p.forn_cnpj?'<span style="color:#64748B;font-size:9px;margin-left:8px">CNPJ: '+esc(p.forn_cnpj)+'</span>':'')
         +'</div>'
         +'<div style="display:flex;align-items:center;gap:8px">'+acaoHtml+'<span style="color:#60A5FA;font-size:10px;font-weight:700;cursor:pointer">📋 Abrir</span>'
-        +(p.status!=='cancelado'?'<span class="pc-cancelar-btn" style="color:#EF4444;font-size:10px;font-weight:700;cursor:pointer;padding:2px 8px;border-radius:6px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08)">❌ Cancelar</span>':'<span style="color:#64748B;font-size:9px">Cancelado</span>')
+        +(p.status!=='cancelado'?'<span class="pc-cancelar-btn" style="color:#EF4444;font-size:10px;font-weight:700;cursor:pointer;padding:2px 8px;border-radius:6px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08)">❌ Cancelar</span>':'<span class="pc-reativar-btn" data-pcnum="'+esc(p.pc_num)+'" style="color:#16A34A;font-size:10px;font-weight:700;cursor:pointer;padding:2px 8px;border-radius:6px;border:1px solid rgba(22,163,74,.3);background:rgba(22,163,74,.08)">🔄 Reativar</span>')
         +'</div>'
       +'</div>';
     cont.appendChild(card);
