@@ -2185,10 +2185,9 @@ async function confAcao(){
     try{await carregarAprov();}catch(e){console.warn('carregarAprov:',e);}
     try{await carregarRev();}catch(e){console.warn('carregarRev:',e);}
 
-    // Gerar pedido ao aprovar
+    // Após aprovação vai para Aprovados — pedido só é criado quando o comprador emitir
     if(ns==='aprovado'){
-      try{await gerarPedidoAutomatico(_cSolId,aprNum,protocolo);}catch(e){console.warn('gerarPedido:',e);}
-      _abaAposDecisao='ped';
+      _abaAposDecisao='aprov';
     } else {
       _abaAposDecisao={rejeitar:'pend',revisar:'rev'}[_cAcao]||'pend';
     }
@@ -2378,6 +2377,21 @@ function _execRelatorio(){
       return true;
     });
     renderRelatorioPedidos(peds); return;
+  }
+
+  // Aplicar filtro de status para tipos baseados em solicitações (geral, fornecedor, area, mes, entrega)
+  if(filtPedStatus){
+    var statusSolicitacao=['aprovado','auto-aprovado','rejeitado','pendente','revisao','cancelado'];
+    if(filtPedStatus==='aprovado'){
+      // aprovado inclui auto-aprovado
+      dados=dados.filter(function(s){return s.status==='aprovado'||s.status==='auto-aprovado';});
+    } else if(statusSolicitacao.indexOf(filtPedStatus)>=0){
+      dados=dados.filter(function(s){return s.status===filtPedStatus;});
+    } else {
+      // é um status de pedido (emitido, enviado, aguardando, recebido, finalizado) — filtrar solicitações que têm pedido com esse status
+      var solIdsComPedido=(_pedidos||[]).filter(function(p){return p.status===filtPedStatus&&p.sol_id;}).map(function(p){return p.sol_id;});
+      dados=dados.filter(function(s){return solIdsComPedido.indexOf(s.id)>=0;});
+    }
   }
 
   // Agrupamentos especiais
