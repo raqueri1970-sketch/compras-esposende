@@ -235,6 +235,18 @@ textarea.fi{resize:vertical;min-height:60px}
   .w{padding:0;max-width:100%}
   .sc{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
 }
+@media print{
+  body.print-rel > *{display:none!important}
+  body.print-rel #print-rel-wrap{display:block!important;position:fixed!important;inset:0!important;background:#fff!important;z-index:99999!important;overflow:visible!important;padding:10mm!important}
+  body.print-rel #print-rel-wrap *{color:#000!important;background:transparent!important}
+  body.print-rel #print-rel-wrap table{width:100%;border-collapse:collapse;font-size:9px}
+  body.print-rel #print-rel-wrap th{background:#1E3A5F!important;color:#fff!important;padding:5px 7px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.print-rel #print-rel-wrap tfoot tr{background:#1E3A5F!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.print-rel #print-rel-wrap tfoot td{color:#fff!important;font-weight:800}
+  body.print-rel #print-rel-wrap td{padding:4px 7px;border-bottom:1px solid #ddd;font-size:8.5px}
+  body.print-rel #print-rel-wrap tr:nth-child(even) td{background:#f5f5f5!important}
+  @page{margin:10mm;size:A4 landscape}
+}
 @media(max-width:520px){
   .cot-g{grid-template-columns:1fr!important}
   .r2{grid-template-columns:1fr!important}
@@ -2423,6 +2435,8 @@ function renderRelatorioTabela(dados){
     html+='<th style="padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.3px">'+h+'</th>';
   });
   html+='</tr></thead><tbody>';
+  var totalValor=dados.reduce(function(a,s){return a+(Number(s.menor_valor)||0);},0);
+  var totalEco=dados.reduce(function(a,s){return a+(Number(s.economia)||0);},0);
   dados.forEach(function(s,i){
     var cor=statusCors[s.status]||'#64748B';
     var bg=i%2?'#111827':'#0F172A';
@@ -2437,7 +2451,12 @@ function renderRelatorioTabela(dados){
     html+='<td style="padding:7px 10px;color:#94A3B8;font-size:9px">'+esc(s.protocolo||'—')+'</td>';
     html+='</tr>';
   });
-  html+='</tbody></table></div></div>';
+  html+='</tbody><tfoot><tr style="background:#1E3A5F;border-top:2px solid #2563EB">';
+  html+='<td colspan="5" style="padding:8px 10px;color:#fff;font-weight:800;font-size:11px">TOTAL — '+dados.length+' registro(s)</td>';
+  html+='<td style="padding:8px 10px;color:#22C55E;font-weight:800;font-size:12px">'+fBR(totalValor)+'</td>';
+  html+='<td style="padding:8px 10px;color:#F59E0B;font-size:10px;font-weight:700">'+(totalEco>0?'Eco: '+fBR(totalEco):'—')+'</td>';
+  html+='<td></td>';
+  html+='</tr></tfoot></table></div></div>';
   cont.innerHTML=html;
 }
 
@@ -2456,6 +2475,9 @@ function renderRelatorioPedidos(peds){
     html+='<th style="padding:7px 9px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.3px">'+h+'</th>';
   });
   html+='</tr></thead><tbody>';
+  var totalPed=peds.reduce(function(a,p){return a+(Number(p.valor)||0);},0);
+  var totalPedOrig=peds.reduce(function(a,p){return a+(Number(p.valor_original||p.valor)||0);},0);
+  var totalEcoPed=totalPedOrig>totalPed?totalPedOrig-totalPed:0;
   peds.forEach(function(p,i){
     var cor=statusCors[p.status]||'#64748B';
     var bg=i%2?'#111827':'#0F172A';
@@ -2474,7 +2496,13 @@ function renderRelatorioPedidos(peds){
     html+='<td style="padding:6px 9px"><span style="background:'+cor+'22;color:'+cor+';border:1px solid '+cor+'44;border-radius:12px;padding:2px 7px;font-size:8px;font-weight:700;white-space:nowrap">'+esc(p.status||'')+'</span></td>';
     html+='</tr>';
   });
-  html+='</tbody></table></div></div>';
+  html+='</tbody><tfoot><tr style="background:#1E3A5F;border-top:2px solid #2563EB">';
+  html+='<td colspan="6" style="padding:8px 9px;color:#fff;font-weight:800;font-size:11px">TOTAL — '+peds.length+' pedido(s)</td>';
+  html+='<td style="padding:8px 9px;color:#22C55E;font-weight:800;font-size:12px">'+fBR(totalPed)+'</td>';
+  html+='<td style="padding:8px 9px;color:#64748B;font-size:10px;text-decoration:line-through">'+fBR(totalPedOrig)+'</td>';
+  html+='<td colspan="2" style="padding:8px 9px;color:#F59E0B;font-weight:700;font-size:10px">'+(totalEcoPed>0?'Economia: '+fBR(totalEcoPed):'—')+'</td>';
+  html+='<td></td>';
+  html+='</tr></tfoot></table></div></div>';
   cont.innerHTML=html;
 }
 
@@ -2527,11 +2555,13 @@ function renderRelatorioMes(dados){
   var cont=document.getElementById('rel-corpo');
   var html='<div class="card"><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">';
   html+='<thead><tr style="background:#1E3A5F;color:#fff"><th style="padding:8px 12px;text-align:left">Mês</th><th>Solicitações</th><th>Aprovadas</th><th>Valor Total</th><th>Economia</th><th>Taxa Aprov.</th></tr></thead><tbody>';
+  var totMesItems=0,totMesAprov=0,totMesValor=0,totMesEco=0;
   Object.entries(meses).sort(function(a,b){return a[0]>b[0]?-1:1;}).forEach(function(e,i){
     var g=e[1]; var tx=g.items.length?Math.round(g.aprov/g.items.length*100):0;
     var bg=i%2?'#111827':'#0F172A';
+    totMesItems+=g.items.length; totMesAprov+=g.aprov; totMesValor+=g.total; totMesEco+=g.eco;
     html+='<tr style="background:'+bg+';border-bottom:1px solid rgba(255,255,255,.06)">';
-    html+='<td style="padding:8px 12px;color:#60A5FA;font-weight:700">'+esc(e[0].replace('/','/'))+'</td>';
+    html+='<td style="padding:8px 12px;color:#60A5FA;font-weight:700">'+esc(e[0])+'</td>';
     html+='<td style="padding:8px 12px;color:#F1F5F9;text-align:center">'+g.items.length+'</td>';
     html+='<td style="padding:8px 12px;color:#22C55E;text-align:center;font-weight:700">'+g.aprov+'</td>';
     html+='<td style="padding:8px 12px;color:#22C55E;font-weight:700">'+fBR(g.total)+'</td>';
@@ -2539,7 +2569,15 @@ function renderRelatorioMes(dados){
     html+='<td style="padding:8px 12px;text-align:center"><span style="background:rgba(34,197,94,.15);color:#22C55E;padding:2px 8px;border-radius:10px;font-weight:700">'+tx+'%</span></td>';
     html+='</tr>';
   });
-  html+='</tbody></table></div></div>';
+  var txTotal=totMesItems?Math.round(totMesAprov/totMesItems*100):0;
+  html+='</tbody><tfoot><tr style="background:#1E3A5F;border-top:2px solid #2563EB">';
+  html+='<td style="padding:8px 12px;color:#fff;font-weight:800">TOTAL</td>';
+  html+='<td style="padding:8px 12px;color:#F1F5F9;text-align:center;font-weight:800">'+totMesItems+'</td>';
+  html+='<td style="padding:8px 12px;color:#22C55E;text-align:center;font-weight:800">'+totMesAprov+'</td>';
+  html+='<td style="padding:8px 12px;color:#22C55E;font-weight:800">'+fBR(totMesValor)+'</td>';
+  html+='<td style="padding:8px 12px;color:#F59E0B;font-weight:800">'+fBR(totMesEco)+'</td>';
+  html+='<td style="padding:8px 12px;text-align:center"><span style="background:rgba(34,197,94,.25);color:#22C55E;padding:2px 8px;border-radius:10px;font-weight:800">'+txTotal+'%</span></td>';
+  html+='</tr></tfoot></table></div></div>';
   cont.innerHTML=html;
 }
 
@@ -2555,10 +2593,13 @@ function renderRelatorioEntrega(){
   if(!peds.length){cont.innerHTML='<div class="empty-msg">Nenhum pedido com prazo de entrega pendente.</div>';return;}
   var html='<div class="card"><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">';
   html+='<thead><tr style="background:#1E3A5F;color:#fff"><th style="padding:7px 10px;text-align:left">Pedido</th><th>Fornecedor</th><th>Descrição</th><th>Valor</th><th>Entrega Prevista</th><th>Dias Restantes</th><th>Status</th></tr></thead><tbody>';
+  var totalEntVal=peds.reduce(function(a,p){return a+(Number(p.valor)||0);},0);
+  var atrasados=0;
   peds.forEach(function(p,i){
     var dt=new Date(p.prazo_entrega+'T12:00:00');
     var diff=Math.round((dt-hoje)/(86400000));
     var cor=diff<0?'#EF4444':diff<=7?'#F59E0B':'#22C55E';
+    if(diff<0) atrasados++;
     var bg=i%2?'#111827':'#0F172A';
     html+='<tr style="background:'+bg+';border-bottom:1px solid rgba(255,255,255,.06)">';
     html+='<td style="padding:6px 10px;color:#60A5FA;font-weight:700;font-size:10px">'+esc(p.pc_num)+'</td>';
@@ -2570,7 +2611,11 @@ function renderRelatorioEntrega(){
     html+='<td style="padding:6px 10px;color:#94A3B8;font-size:9px">'+esc(p.status||'')+'</td>';
     html+='</tr>';
   });
-  html+='</tbody></table></div></div>';
+  html+='</tbody><tfoot><tr style="background:#1E3A5F;border-top:2px solid #2563EB">';
+  html+='<td colspan="3" style="padding:8px 10px;color:#fff;font-weight:800;font-size:11px">TOTAL — '+peds.length+' pedido(s)'+(atrasados>0?' · <span style="color:#EF4444">'+atrasados+' atrasado(s)</span>':'')+'</td>';
+  html+='<td style="padding:8px 10px;color:#22C55E;font-weight:800;font-size:12px">'+fBR(totalEntVal)+'</td>';
+  html+='<td colspan="3"></td>';
+  html+='</tr></tfoot></table></div></div>';
   cont.innerHTML=html;
 }
 
@@ -2622,26 +2667,20 @@ function exportarRelatorioPDF(){
   var elArea=document.getElementById('rel-area'); if(elArea&&elArea.value) filtros.push('Área: '+elArea.value);
   var elPs=document.getElementById('rel-ped-status'); if(elPs&&elPs.value) filtros.push('Status: '+elPs.value);
   var tituloTipo={geral:'Geral',pedidos:'Pedidos de Compra',aprovados:'Aprovados',rejeitados:'Rejeitados',pendentes:'Pendentes',revisao:'Em Revisão',fornecedor:'Por Fornecedor',area:'Por Área',entrega:'Por Prazo de Entrega',mes:'Por Mês'}[tipo]||tipo;
-  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório '+tituloTipo+'</title>'
-    +'<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;color:#000;background:#fff;padding:14px}'
-    +'table{width:100%;border-collapse:collapse;font-size:9px}th{background:#1E3A5F;color:#fff;padding:6px 8px;text-align:left}'
-    +'td{padding:5px 8px;border-bottom:1px solid #ddd;color:#111}tr:nth-child(even){background:#f7f7f7}'
-    +'.pill,.sc-val,.kpi-n,.sc-id,.sc-desc,.sc-meta,.sc-ft,.sc-eco{color:#000!important;background:transparent!important;border-color:#ccc!important}'
-    +'h2{font-size:15px;color:#1E3A5F;margin-bottom:4px;font-weight:900}'
-    +'p{font-size:10px;color:#555;margin-bottom:10px}'
-    +'span[style]{color:#000!important;background:transparent!important}'
-    +'@page{margin:10mm;size:A4 landscape}</style></head>'
-    +'<body>'
-    +'<h2>Relatório Esposende Calçados — '+tituloTipo+'</h2>'
-    +'<p>Gerado em '+new Date().toLocaleDateString('pt-BR')+' '+new Date().toLocaleTimeString('pt-BR')
+  // Remover wrap anterior se existir
+  var old=document.getElementById('print-rel-wrap'); if(old) old.remove();
+  var wrap=document.createElement('div');
+  wrap.id='print-rel-wrap';
+  wrap.style.display='none';
+  wrap.innerHTML='<h2 style="font-family:Arial;font-size:15px;color:#1E3A5F;margin-bottom:4px;font-weight:900">Relatório Esposende Calçados — '+tituloTipo+'</h2>'
+    +'<p style="font-family:Arial;font-size:10px;color:#555;margin-bottom:10px">Gerado em '+new Date().toLocaleDateString('pt-BR')+' '+new Date().toLocaleTimeString('pt-BR')
     +(filtros.length?' &nbsp;|&nbsp; '+filtros.join(' | '):'')+'</p>'
-    +c.innerHTML
-    +'</body></html>';
-  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  var url=URL.createObjectURL(blob);
-  var w=window.open(url,'_blank');
-  if(!w){alert('Popup bloqueado. Permita popups para este ficheiro e tente novamente.');URL.revokeObjectURL(url);return;}
-  w.onload=function(){setTimeout(function(){w.print();URL.revokeObjectURL(url);},400);};
+    +c.innerHTML;
+  document.body.appendChild(wrap);
+  document.body.classList.add('print-rel');
+  window.print();
+  document.body.classList.remove('print-rel');
+  wrap.remove();
 }
 
 // PDF do pedido — abrir janela de impressão com opção de salvar como PDF
