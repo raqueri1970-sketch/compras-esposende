@@ -3540,15 +3540,25 @@ async function gerarPedidoAutomatico(solId, aprNum, protocolo){
 
 function gerarNumAPR(){
   var ano=new Date().getFullYear();
-  var seq=Number(localStorage.getItem('esp_apr_seq')||0)+1;
-  localStorage.setItem('esp_apr_seq',seq);
+  var seq;
+  try{
+    seq=Number(localStorage.getItem('esp_apr_seq')||0)+1;
+    localStorage.setItem('esp_apr_seq',seq);
+  }catch(e){
+    seq=Number(Date.now().toString().slice(-5));
+  }
   return 'APR-'+ano+'-'+String(seq).padStart(5,'0');
 }
 
 function gerarNumPC(){
   var ano=new Date().getFullYear();
-  var seq=Number(localStorage.getItem('esp_pc_seq')||0)+1;
-  localStorage.setItem('esp_pc_seq',seq);
+  var seq;
+  try{
+    seq=Number(localStorage.getItem('esp_pc_seq')||0)+1;
+    localStorage.setItem('esp_pc_seq',seq);
+  }catch(e){
+    seq=Number(Date.now().toString().slice(-6));
+  }
   return 'PC-'+ano+'-'+String(seq).padStart(6,'0');
 }
 
